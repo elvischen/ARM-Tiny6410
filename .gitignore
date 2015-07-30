@@ -1,0 +1,5 @@
+no-os-code/
+*.bin
+*.elf
+*.o
+*.dis
