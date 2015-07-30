@@ -66,3 +66,5 @@ delay_loop:
 	sub r0, r0, #1
 	bne delay_loop
 	mov pc, lr
+//  与2.leds_c_sp/的LED闪烁情况进行对比;
+//  体会汇编函数的高效率;
