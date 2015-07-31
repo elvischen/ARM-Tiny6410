@@ -13,10 +13,10 @@
 	LED对应的GPIO,要查看对应电路图。
 	对应GPIO的控制寄存器和数据寄存器,要查看相应的芯片手册
 
-	LED1 -> GPK4 -> GPKCON0[19:16] / GPBDAT[4]
-	LED2 -> GPK5 ->	GPKCON0[23:20] / GPBDAT[5]
-	LED3 -> GPK6 -> GPKCON0[27:24] / GPBDAT[6]
-	LED4 -> GPK7 -> GPKCON0[31:28] / GPBDAT[7]
+	LED1 -> GPK4 -> GPKCON0[19:16] / GPKDAT[4]
+	LED2 -> GPK5 ->	GPKCON0[23:20] / GPKDAT[5]
+	LED3 -> GPK6 -> GPKCON0[27:24] / GPKDAT[6]
+	LED4 -> GPK7 -> GPKCON0[31:28] / GPKDAT[7]
 	低电平点亮LED灯
 ****************************************************************/
 

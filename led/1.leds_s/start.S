@@ -12,20 +12,19 @@
 	LED对应的GPIO,要查看对应电路图。
 	对应GPIO的控制寄存器和数据寄存器,要查看相应的芯片手册
 
-	LED1 -> GPK4 -> GPKCON0[19:16] / GPBDAT[4]
-	LED2 -> GPK5 ->	GPKCON0[23:20] / GPBDAT[5]
-	LED3 -> GPK6 -> GPKCON0[27:24] / GPBDAT[6]
-	LED4 -> GPK7 -> GPKCON0[31:28] / GPBDAT[7]
-						IO方式配置 /  IO数据配置
+	LED1 -> GPK4 -> GPKCON0[19:16] / GPKDAT[4]
+	LED2 -> GPK5 ->	GPKCON0[23:20] / GPKDAT[5]
+	LED3 -> GPK6 -> GPKCON0[27:24] / GPKDAT[6]
+	LED4 -> GPK7 -> GPKCON0[31:28] / GPKDAT[7]
+                        IO方式配置 /  IO数据配置
 ****************************************************************/
-.global _start								//指定入口函数
+.global _start						
 
 _start:
 	// ----1. 配置ARM CPU寄存器的外设地址----
 	// 把外设的基地址告诉CPU
     ldr r0, =0x70000000 					//对于6410来说,内存(0x00000000～0x60000000),外设(0x70000000-0x7fffffff)
-	// 0x13 = 0000 1101 b
-	// 配置r0的第0,2,3位为1, 其他位不变(位运算)
+	// 0x13 = 0001 0011 b
     orr r0, r0, #0x13						//外设大小:256M
 	// 在基于ARM的嵌入式应用系统中，存储系统通常是通过系统控制协处理器CP15完成的。
 	// CP15包含16个32位的寄存器，其编号为0~15。
