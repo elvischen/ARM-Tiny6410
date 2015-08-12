@@ -55,8 +55,8 @@ GNU 网站上说 start 可以用任意一种描述地址的符号来描述。
 例如：
 
 	SECTIONS
-	{  
-		. = 0×10000; 				/* 这是注释 */
+	{  	/* 注释格式示例 */
+		. = 0×10000; 			
 	   	.text : { *(.text) } 
 		. = 0×8000000;
 	   	.data : { *(.data) } 
@@ -64,7 +64,8 @@ GNU 网站上说 start 可以用任意一种描述地址的符号来描述。
 	}
 
 解释一下上述的例子:    
-. = 0×10000 : 把定位器符号置为0×10000 (若不指定, 则该符号的初始值为0).     
+. = 0×10000 : 把定位器符号置为0×10000 (若不指定, 则该符号的初始值为0) 定位器符号地址可以在.dis反汇编文件中查看.
+定位器符号的地址为程序运行地址, 没有AT()则存储地址同运行地址;
 .text : { *(.text) } : 将所有('*'符号代表任意输入文件)输入文件的.text section合并成一个.text section, 
 该section的地址由定位器符号的值指定, 即0×10000.        
 . = 0×8000000 ：把定位器符号置为0×8000000      
@@ -85,48 +86,49 @@ GNU 网站上说 start 可以用任意一种描述地址的符号来描述。
 secname: firtst, contents: 'head.o init.o nand.o', start: 0x00000000;    
 secname: second, contents: 'main.o', start: 0x30000000, At: 4096;     
 
-第一段为firtst段，存放head.o/init.o/nand.o，运行地址为0x00000000, 由于没有AT指定存储地址，那么存储地址同运行地址；    
-第二段为second段，存放main.o, AT(4096)表示第二段并不直接跟在第一段后面，而是放在整个映像文件偏移0x1000地址的地方。
+第一段为firtst段，存放head.o/init.o/nand.o，运行地址为0x00000000, 由于没有at指定存储地址，那么存储地址同运行地址；    
+第二段为second段，存放main.o, at(4096)表示第二段并不直接跟在第一段后面，而是放在整个映像文件偏移0x1000地址的地方。
 而运行地址为0x30000000, 则当要执行main.o的程序时，先从映像文件的0x1000地址开始，拷贝main.o的内容至0x30000000，
 然后跳转到0x30000000开始执行相应代码；
 
 
-编写好的.lds文件，在用arm-linux-ld连接命令时, 带-Tfilename来调用执行。    
-如 arm-linux-ld -Tnand.lds head.o init.o nand.o main.o -o nand_elf           
-也可用-Ttext参数直接指定连接地址如：          
-arm-linux-ld -Ttext 0x30000000 head.o init.o nand.o main.o -o nand_elf     
+编写好的.lds文件，在用arm-linux-ld连接命令时, 带-tfilename来调用执行。    
+如 arm-linux-ld -tnand.lds head.o init.o nand.o main.o -o nand_elf           
+也可用-ttext参数直接指定连接地址如：          
+arm-linux-ld -ttext 0x30000000 head.o init.o nand.o main.o -o nand_elf     
 
 ---------------------------------------------
 
 例如：一个uboot.lds链接器脚本
 
-	SECTIONS
+	sections
 	{
 		. = 0x00000000;   	 定位当前地址为0地址
-		. = ALIGN(4);        代码以四字节对齐
+		. = align(4);        代码以四字节对齐
 		.text      :         指定代码段.text
 		{
 			cpu/arm920t/start.o (.text)  代码的第一个代码段
 			*(.text)         			 其他代码段
 		}
-		. = ALIGN(4);
+		. = align(4);
 		.rodata : { *(.rodata) }  		 指定只读数据段
-		. = ALIGN(4);
+		. = align(4);
 		.data : { *(.data) }             指定读写数据段
-		. = ALIGN(4);
+		. = align(4);
 		.got : { *(.got) }               指定got段，got段式是uboot自定义的一个段，非标准段
 
 		__u_boot_cmd_start = .;          其赋值为当前位置，即起始位置
-		.u_boot_cmd : { *(.u_boot_cmd) } u_boot_cmd段，Uboot把所有的uboot命令放在该段。
+		.u_boot_cmd : { *(.u_boot_cmd) } u_boot_cmd段，uboot把所有的uboot命令放在该段。
 		__u_boot_cmd_end = .;            把其赋值为当前位置，即结束位置
-		. = ALIGN(4);
+		. = align(4);
 		__bss_start = .;                 把__bss_start赋值为当前位置，即bss段的开始位置
 		.bss : { *(.bss) }               指定bss段
 		_end = .;                        把_end赋值为当前位置，即bss段的结束位置
 	}
 
-1. 其中用了大量的对齐ALIGN(4)， 即表示接下来要存入映像文件的段，需要保持其在映像文件中的偏移地址是四字节对齐的。     
+1. 其中用了大量的对齐align(4)， 即表示接下来要存入映像文件的段，需要保持其在映像文件中的偏移地址是四字节对齐的。     
 2. 里面用了不少符号记录当前的位置，例如 __u_boot_cmd_start, __u_boot_cmd_end, __bss_start, _end,
 这些符号都是在汇编程序中会用到的。例如在汇编程序进行清零bss段操作时，根据__bss_start/_end就知道bss段的位置。
+3. 没有使用AT()指定存储地址，那么存储地址(链接地址)同运行地址；    
 
 ------------------------------------
