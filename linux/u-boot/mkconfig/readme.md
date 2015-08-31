@@ -34,18 +34,21 @@ Makefile检索到1944行的mini6410_nand_config-ram128, 根据Makefile的规则,
 之后执行执行`@$(MKCONFIG) mini6410 arm s3c64xx mini6410 samsung s3c6410 NAND ram128`
 即`./mkconfig mini6410 arm s3c64xx mini6410 samsung s3c6410 NAND ram128`;
 
-mkconfig脚步，根据输入参数，进行以下配置:
+-----------
 
-1. APPEND=no, 创建新配置文件
-2. 根据参数$1设置BOARD_NAME
+mkconfig脚本，根据输入参数，进行以下配置:
+
+1. APPEND=no,即创建新配置文件
+2. 根据参数$1设置开发板名称BOARD_NAME;
 3. 输出消息"Configuring for xxxx board ..."
-4. 进入./include目录, 进行配置(将特定的文件链接到通用名字目录上)
+4. 进入./include目录, 准备进行配置(创建到平台/开发板相关的头文件链接)
 5. 删除asm, 根据参数$2，决定使用arm-xxx链接到asm; 
 6. 配置asm/arch目录, 根据参数$6选择链接特定架构目录;
 7. 将特定cpu芯片的头文件(s3c6410.h)链接到通用头文件(regs.h);
 8. 链接asm/proc目录;
 9. 在include目录下, 生成config.mk文件，里面为配置信息;
-10. 在include目录下, 生成config.h头文件，该头文件内包含特定芯片的头文件(configs/mini6410.h);    
+10. 在include目录下, 生成config.h头文件，该头文件内包含特定芯片的头文件(configs/mini6410.h).此头文件为开发板的配置文件，内部包含很多需要配置的信息; 
+
 
 ------
 	
