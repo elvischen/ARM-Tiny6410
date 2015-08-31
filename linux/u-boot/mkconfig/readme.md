@@ -2,10 +2,13 @@ mkconfig
 ================
 
 U-Boot 编译步骤:
+
 1. 进入 U-boot 源代码目录,执行:   
 	`cd /opt/FriendlyARM/mini6410/linux/u-boot-mini6410`
+
 2. 生成配置文件
 	`make mini6410_nand_config-ram128`
+
 3. 编译
 	`make`
 
@@ -24,7 +27,7 @@ unconfig的定义:
 	 345         $(obj)board/*/config.tmp $(obj)board/*/*/config.tmp
 
 其中343行为我添加的一行代码；   
-当执行`make mini6410_nand_config-ram128`命令时，   
+当执行`make mini6410_nand_config-ram128`命令时,
 Makefile检索到1944行的mini6410_nand_config-ram128, 根据Makefile的规则, 要执行`make mini6410_nand_config-ram128`，
 需要先执行`make unconfig`, 即删除旧的配置文件。    
 
@@ -42,55 +45,43 @@ mkconfig脚步，根据输入参数，进行以下配置:
 7. 将特定cpu芯片的头文件(s3c6410.h)链接到通用头文件(regs.h);
 8. 链接asm/proc目录;
 9. 在include目录下, 生成config.mk文件，里面为配置信息;
-10. 在include目录下, 生成config.h头文件，该头文件内包含特定芯片的头文件(configs/mini6410.h);
+10. 在include目录下, 生成config.h头文件，该头文件内包含特定芯片的头文件(configs/mini6410.h);    
 
-
-
-	#$(MKCONFIG) mini6410 arm s3c64xx mini6410 samsung s3c6410 NAND ram128
-	#$0				$1	$2	$3		$4			$5		$6	  $7	$8
+------
 	
+	
+	
+	# $(MKCONFIG) mini6410 arm s3c64xx mini6410 samsung s3c6410 NAND ram128
+	# $0				$1	$2	$3		$4			$5		$6	  $7	$8
 	APPEND=no		# Default: Create new config file
 	BOARD_NAME=""	# Name to print in make output
-	
 	# $@ = mini6410 arm s3c64xx mini6410 samsung s3c6410 NAND ram128
 	# $# = 8
 	[ "${BOARD_NAME}" ] || BOARD_NAME="$1"
 	# BOARD_NAME=mini6410
-	
 	echo "Configuring for ${BOARD_NAME} board which boot from $7 $8..."
 	# Configuring for mini6410 board which boot from NAND ram128...
-	
 	cd ./include
 	rm -f asm
 	ln -s asm-$2 asm		# ln -s asm-arm
 	rm -f asm-$2/arch		# rm -f asm-arm/arch
-	
 	# $6 = s3c6410
 	ln -s ${LNPREFIX}arch-$6 asm-$2/arch	# ln -s arch-s3c6410 asm-arm/arch
-	
 	# $3 = s3c64xx
 	# create link for s3c64xx SoC
 	rm -f regs.h
 	ln -s $6.h regs.h						# ln -s s3c6410.h regs.h
 	rm -f asm-$2/arch						# rm -f asm-arm/arch
 	ln -s arch-$3 asm-$2/arch				# ln -s arch-s3c64xx asm-arm/arch
-	
 	rm -f asm-$2/proc						# rm -f asm-arm/proc
 	ln -s ${LNPREFIX}proc-armv asm-$2/proc  # ln -s proc-armv asm-arm/proc
-	
-	#
 	# Create include file for Make
-	#
 	echo "ARCH   = $2" >  config.mk
 	echo "CPU    = $3" >> config.mk
 	echo "BOARD  = $4" >> config.mk
-	
-	#
 	# Create board specific header file
-	#
 	> config.h		# Create new config file
 	echo "/* Automatically generated - do not edit */" >>config.h
-	
 	# $7 = NAND
 	case $7 in
 	SD)
@@ -102,7 +93,6 @@ mkconfig脚步，根据输入参数，进行以下配置:
 	*)
 		;;
 	esac
-	
 	# $8 = ram128
 	case $8 in
 	ram128)
@@ -114,7 +104,6 @@ mkconfig脚步，根据输入参数，进行以下配置:
 	*)
 		;;
 	esac
-
 	echo "#include <configs/$1.h>" >>config.h
 
 
