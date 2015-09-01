@@ -16,7 +16,19 @@ SD Boot - SD卡启动
 ![sd](images/sd-mapping.png "sd-mapping")
 ![sdhc](images/sdhc-mapping.png "sd-mapping")
 
+###备注: 
 6410的手册上说，可以从nandflash、onenand、SD卡启动，没有专用的烧录工具的情况下，只有SD卡启动是可以考虑的。手册上看到，SD卡启动，实际上是先执行片内IROM中的一段程序，该程序从SD卡中读取代码，写到stepping stone中，stepping stone是位于0x0c000000、size为8K的片内内存，代码写入stepping stone后，跳到0x0c000000处继续执行程序。
+
+①  iROM supports initial boot up,initialize system clock,D-TCM,device specific controller and bootin device.     
+②  iROM boot codes can load 4KB of bootloader to stepping stone. The 8KB boot loader is called BL1.    
+③  BL1: BL1 can initialize system clock, UART, and SDRAM for user. After initializing, BL1 will load remaining boot loader which is called BL2 on the SDRAM .    
+④  Finally, jump to start address of BL2. That will make good environment to use system.     
+
+关于SDHC的最后1025个扇区(Reserved):     
+s3c6410有一个缺点，就是在识别SDHC卡的时候会忽略后面的1024的块，也就是512K的空间，所以在往SDHC卡内部存储
+程序时只能抛弃后面的512K的空间。    
+**对于S3C6410，根本就不知道最后1024个扇区的存在。S3C6410总是在-18扇区位置（对于SDHC，实际为-(18
++1024)扇区）读取BL1数据。**   
 
 ---- 
 ###SD卡启动裸机程序    
