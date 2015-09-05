@@ -18,6 +18,11 @@ FriendlyARM - Tiny6410
 	JTAG:		10 pin 2.0mm space Jtag connector
 	Button:		Reset button, 连接M_nRESET接口, 低电平有效;
 	Power:		Supply Voltage from 2.0V to 6V
+
+	Crystal:	Y1 - 12M - ( XTO , XTI )				- 外部时钟	
+				Y2 - 27M - ( 27MXTO , 27MXTI )			- X27MXTO
+				Y3 - 48M - ( OTGTO , OTGTI )			- USB OTG 时钟
+				Y4 - 32.768K - ( RTCTO , RTCTI ) 		- RTC 时钟
 ==========================================================================
 扩展底层板: Tiny6410SDK 增强版 - TinyADK 1312B
 	Button:		K1 - XEINT16
@@ -28,7 +33,23 @@ FriendlyARM - Tiny6410
 	Buzzer:		XpwmTOUT0 (XpwmTOUT0/XCLKOUT/GPF14)
 	I2C-EEPROM:	ATMLH346
 				Xi2cSCL0, Xi2cSDA0
-	
-			
 
+==========================================================================
 
+NAND FLASH:
+SAMSUNG K9K8G08U0E-SCB0, 8G bit Nand Flash 1Gx8 SLC
+K9F4G08U0E , K9K8G08U0E, 同一个芯片手册;
+
+型号说明：
+http://www.elnec.com/device/Samsung/K9F4G08U0E+%5BTSOP48%5D/
+
+- K = Memory
+- 9 = NAND Flash
+- F = SLC Normal ; K = SLC Die Normal, SLC Die stack;
+- Density: 4G = 4Gbit, 8G = 8Gbit;
+- Technology: 0 = Normal (x8)
+	- Organization: 8 = x8
+	- Supply Voltage: U = 2.7V to 3.6V
+	- Mode: 0 = Normal
+	- Generation: E = 6th generation
+==========================================================================

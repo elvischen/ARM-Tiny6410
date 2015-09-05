@@ -31,6 +31,9 @@ S3C6410:
 		NORMAL, IDLE, STOP, DEEP-STOP, and SLEEP
 		
 
+	AHB ( Advanced High performance Bus) - 用于高性能模块 (eg. CPU与DMA/DSP的连接)
+	APB ( Advanced Peripheral Bus) - 用于低带宽的周边外设连接(eg. UART, IIC)
+
 ---------------------------------         
 ###CLOCK SOURCE SELECTION
 
@@ -42,6 +45,7 @@ Otherwise, XEXTCLK is selected.
 OM[4:0]决定了S3C6410的启动模式, 启动OM[0]决定了S3C6410的外部时钟源:  
 	* OM[0] = 0, XEXTCLK, 外部时钟(external clock);
 	* OM[1] = 1, XXTIpll, 外部晶振(external crystal;
+为了降低电磁干扰、降低板间布线要求, S3C6410外接晶振频率通常很低(12M)。
 
 The operating mode is mainly classified into six categories according to the boot device.    
 The boot device can be among SROM, NOR, OneNAND, MODEM and Internal ROM.    
@@ -116,6 +120,7 @@ PLL输出信号，还可以进一步通过其他寄存器来配置分频，最�
 
 ---------------------------------         
 ####AHB Clock & APB Clock
+
 
 As described, the frequency ratio between AHB clock and APB clock must be an even integer value.   
 For example, if DIVHCLK has 1 of CLK_DIV0[8], then DIVPCLK must be 1, 3, ... of CLK_DIV0[15:12].   
