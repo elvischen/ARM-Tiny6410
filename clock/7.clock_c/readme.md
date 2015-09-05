@@ -44,7 +44,7 @@ Otherwise, XEXTCLK is selected.
 
 OM[4:0]决定了S3C6410的启动模式, 启动OM[0]决定了S3C6410的外部时钟源:  
 	* OM[0] = 0, XEXTCLK, 外部时钟(external clock);
-	* OM[1] = 1, XXTIpll, 外部晶振(external crystal;
+	* OM[0] = 1, XXTIpll, 外部晶振(external crystal;
 为了降低电磁干扰、降低板间布线要求, S3C6410外接晶振频率通常很低(12M)。
 
 The operating mode is mainly classified into six categories according to the boot device.    
