@@ -1,0 +1,34 @@
+FriendlyARM - Tiny6410
+==========================================================================
+芯片: ARM11 (SAMSUNG S3C6410, run at 533Mhz, up to 667Mhz)
+核心板: Tiny6410
+扩展底层板: Tiny6410SDK 增强版 - TinyADK 1312B
+==========================================================================
+核心板: Tiny6410
+	DRAM:		SAMSUNG K4X2G323PD-8GD8
+				Mobile DDR 64Mx32 200Mhz Halogen Free FBGA90 DRAM
+				64Mx32 = 2048Mb = 2Gb = 256MB
+	NAND FLASH: SAMSUNG K9K8G08U0E-SCB0, 8G bit Nand Flash 1Gx8 SLC 
+				
+	LED:		LED1 ~ LED4 (nLED_1 ~ nLED_4), 低电平点亮LED.
+					LED1 - GPK4
+					LED2 - GPK5
+					LED3 - GPK6
+					LED4 - GPK7
+	JTAG:		10 pin 2.0mm space Jtag connector
+	Button:		Reset button, 连接M_nRESET接口, 低电平有效;
+	Power:		Supply Voltage from 2.0V to 6V
+==========================================================================
+扩展底层板: Tiny6410SDK 增强版 - TinyADK 1312B
+	Button:		K1 - XEINT16
+				K2 - XEINT17
+				K3 - XEINT18
+				K4 - XEINT19
+				Button IO接上拉电阻，按下按键后IO为拉为低电平;
+	Buzzer:		XpwmTOUT0 (XpwmTOUT0/XCLKOUT/GPF14)
+	I2C-EEPROM:	ATMLH346
+				Xi2cSCL0, Xi2cSDA0
+	
+			
+
+
