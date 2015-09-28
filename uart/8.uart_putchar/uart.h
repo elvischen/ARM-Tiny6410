@@ -23,9 +23,12 @@ void UART0_Set_BaudRate();
 void UART0_Set_Format();
 
 //发送字符
-void UART0_PutChar();
+void UART0_PutChar(char data);
 
 //接收字符
-void UART0_GetChar();
+char UART0_GetChar();
+
+// 发送一段字符串
+void UART0_SendString(char *string);
 
 #endif
