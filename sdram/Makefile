@@ -9,8 +9,10 @@ $(OBJECT).bin: start.o main.o clock.o uart.o sdram.o
 	arm-linux-objcopy -O binary $(OBJECT).elf $(OBJECT).bin
 	arm-linux-objdump -D $(OBJECT).elf > $(OBJECT).dis
 %.o : %.S
-	arm-linux-gcc -o $@ $< -c
+	#arm-linux-gcc -o $@ $< -c
+	arm-linux-gcc -g -c -O2 -o $@ $^
 %.o : %.c
-	arm-linux-gcc -o $@ $< -c 
+	#arm-linux-gcc -o $@ $< -c 
+	arm-linux-gcc -g -c -O2 -o $@ $^
 clean:
 	rm *.o *.elf *.bin *.dis  -rf
