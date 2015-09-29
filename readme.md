@@ -7,7 +7,7 @@ FriendlyARM - Tiny6410
 ----------
 
 ##核心板: Tiny6410 - v1308
-	DRAM:		SAMSUNG K4X2G323PD-8GD8
+	SDRAM:		SAMSUNG K4X2G323PD-8GD8
 				Mobile DDR 64Mx32 200Mhz Halogen Free FBGA90 DRAM
 				64Mbx32 = 2048Mb = 2Gb = 256MB
 	
@@ -47,7 +47,21 @@ K9F4G08U0E , K9K8G08U0E, 同一个芯片手册;
 		- Mode: 0 = Normal
 		- Generation: E = 6th generation
 
-		
+
+####SDRAM - K4X2G323PD-8GD8
+<http://www.samsung.com/us/business/oem-solutions/pdfs/PSG_2H_2012.pdf> 
+
+	K4X2G323PD-8GD8 
+	K:		SAMSUNG Memort
+	4:	 	DRAM
+	X:		Mobile DDR SDRAM
+	2G:	2G, 8K/64ms
+	32:	x32 (bit organization)		3:		4 of Internal Banks
+	P:		LVTTL, 1.8V, 1.8V
+	D:		5th Generation
+	
+	S/D: 90balls FBGA
+
 ======
 ##扩展底层板: Tiny6410SDK 增强版 - TinyADK 1312B
 	
