@@ -134,6 +134,49 @@ The baud-rate generator can be clocked by PCLK, EXT_UCLK0 or EXT_UCLK1.
 	* UART FIFO CONTROL REGISTER(UFCON0)
 	* UART MODEM CONTROL REGISTER(UMCON0)
 
+
+----
+
+### ISSUE
+
+此文件夹的程序所编译的uart.bin，如果通过sd-no-os/的烧写方式（讲.bin文件通过dd命令烧写到SD卡的BL1区域，并配置ARM开发板为SDBOOT方式），将无法正常执行。      
+而通过Friendly ARM官方提供的MiniTools.exe烧写工具，则可以正常执行。    
+
+
+因为程序中的Makefile中，配置链接地址为0x5000_0000(SDRAM的地址空间)。
+
+	arm-linux-ld -Ttext 0x50000000 -o $(OBJECT).elf $^
+
+而程序以SDBOOT启动时，S3C6410启动后，从SD的BL1中拷贝代码到Stepping Stone中，其地址为0x0000_0000 ~ 0x07FF_FFFF;然后PC从0x0000_0000开始执行程序，即start.S代码。
+
+查看反汇编文件：
+
+	uart.elf:     file format elf32-littlearm
+
+
+	Disassembly of section .text:
+
+	50000000 <_start>:
+	50000000:   e3a00207    mov r0, #1879048192 ; 0x70000000
+	50000004:   e3800013    orr r0, r0, #19
+	50000008:   ee0f0f92    mcr 15, 0, r0, cr15, cr2, {4}
+	5000000c:   e59f001c    ldr r0, [pc, #28]   ; 50000030 <halt+0x4>
+	50000010:   e3a01000    mov r1, #0
+	50000014:   e5801000    str r1, [r0]
+	50000018:   e59fd014    ldr sp, [pc, #20]   ; 	50000034 <halt+0x8>
+	5000001c:   e3800a01    orr r0, r0, #4096   ; 0x1000
+	50000020:   ee010f10    mcr 15, 0, r0, cr1, cr0, {0}
+	50000024:   eb000015    bl  50000080 <clock_init>
+	50000028:   eb000002    bl  50000038 <main>
+
+
+因为程序实际在Stepping Stone中执行，很多跳转程序都会跳转到0x50000000之后的地址空间，程序就跳转到未初始化未配置的SDRAM中。
+
+而使用MiniTools.exe，在烧写程序到SDARM前，MiniTools.exe已经配置好了SDRAM，此时烧写程序，程序运行正常。
+
+可以看到，**链接地址的配置是非常重要的**！       
+没有在对应链接地址运行的程序十分危险。因此需要**重定向**。
+
 ----
 后记：   
 `$ cp -r xxx/dirs/ .`   
