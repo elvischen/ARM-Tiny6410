@@ -22,7 +22,7 @@
 #include "leds.h"
 
 // 打开或关闭，决定是否使用虚拟地址来配置LED, 用于检测MMU是否配置成功
-//#define MMU_VIRSUAL_ADDRESS
+#define MMU_VIRSUAL_ADDRESS
 
 #define LEDS_NUMBER		4
 

@@ -15,4 +15,8 @@ $(OBJECT).bin: start.o main.o clock.o sdram.o mmu.o leds.o
 	#arm-linux-gcc -g -c -O2 -o $@ $^
 clean:
 	rm *.o *.elf *.bin *.dis  -rf
+send:
+	make
+	cp $(OBJECT).bin ~/Downloads/1.bin
+	make clean
 
