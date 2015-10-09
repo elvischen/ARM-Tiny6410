@@ -1,39 +1,35 @@
 /****************************************************************
-    Copyright (C) 2015 Sean Guo. All rights reserved.
-					      									  
-    > File Name:         < main.c >
-    > Author:            < Sean Guo >
-    > Mail:              < iseanxp+code@gmail.com >
-    > Created Time:      < 2015/10/08 >
-    > Last Changed: 
-    > Description:		Friendly ARM - Tiny6410 裸机程序 - MMU地址映射
+  Copyright (C) 2015 Sean Guo. All rights reserved.
+
+  > File Name:         < main.c >
+  > Author:            < Sean Guo >
+  > Mail:              < iseanxp+code@gmail.com >
+  > Created Time:      < 2015/07/31 >
+  > Last Changed: 
+  > Description:		C语言实现LED灯控制
+  						FriendlyARM - Tiny6410 裸机程序 
 ****************************************************************/
-//延时函数
-void delay()
-{
-	volatile int i = 0x10000;
-	while (i--);
-}
+
+#include "leds.h"
 
 int main()
 {
-	int i = 0;
+	int number = 0;
+	leds_init();
 
-	// 虚拟地址
-	volatile unsigned long *gpkcon0 = (volatile unsigned long *)0x10008800;
-	volatile unsigned long *gpkdat = (volatile unsigned long *)0x10008808;
+	//开始默认关闭LED灯
+	leds_OFF_all();
 
-	*gpkcon0 = (*gpkcon0 & ~(0xffff<<16)) | (0x1111<<16);
+	// test1
+//	leds_ON_all();
 
-	while (1)
-	{
-		*gpkdat = (*gpkdat & ~(0xf<<4)) | (i<<4);
-		i++;
-		if (i == 16)
-			i = 0;
-		delay(0x10000);
-	}
+	// test2
+//	leds_flowing(10);
+//	leds_OFF_all();
+
+	// test3
+	leds_binary(10);
+	leds_OFF_all();
 
 	return 0;
 }
-

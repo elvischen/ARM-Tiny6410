@@ -1,11 +1,13 @@
 SECTIONS {
-    . = 0xc0000000;
+    . = 0x50000000;
     
 	.text : {
 			start.o
+			main.o
+			clock.o
+			leds.o
 			sdram.o
 			mmu.o
-			clock.o
 			* (.text)
 	}
 

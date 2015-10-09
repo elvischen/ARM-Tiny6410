@@ -4,7 +4,7 @@
 # objdump -D, 将elf文件反汇编为dis文件, 用于调试程序
 # -T ddr.lds, 指定链接脚本文件
 OBJECT=mmu
-$(OBJECT).bin: start.o main.o clock.o sdram.o mmu.o
+$(OBJECT).bin: start.o main.o clock.o sdram.o mmu.o leds.o
 	arm-linux-ld -T $(OBJECT).lds -o $(OBJECT).elf $^
 	arm-linux-objcopy -O binary $(OBJECT).elf $(OBJECT).bin
 	arm-linux-objdump -D $(OBJECT).elf > $(OBJECT).dis
