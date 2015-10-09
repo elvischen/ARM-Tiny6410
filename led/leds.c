@@ -166,12 +166,12 @@ void leds_binary(unsigned int numbers)
 {
 	unsigned short i = 0;
 
-	numbers *= 4;	// numbers个大循环, 4*numbers个LED切换
-	while(numbers--){
+	while(numbers){
 		i++;
 		if(i > 0xf)	// 这个判断值为 2^(LEDS_NUMBER); 这里默认4个LED灯;
 	   	{
 			i = 0;	
+			numbers = numbers - 1;
 		}
 
 		if(i & BIT0)
