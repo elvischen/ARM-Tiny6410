@@ -71,7 +71,7 @@ int sdram_init()
 	//				当CL=3时，内存读取数据的延迟时间就应该是三个时钟周期，因此，这“2”与“3”之间的差别就不仅仅局限于“1”了，而是1个时钟
 	//				工作在相同频率下的同种内存，将CL设置为2会得到比3更优秀的性能（当然你的内存必须支持CL=2的模式）。
 	//				芯片手册K4X2G323PD-8GD8_90F_8x13_R10.pdf中, CAS Latency (2, 3)
-	VI_SET_VAL( P1CASLAT, ( 2 << 1 ) );  
+	VI_SET_VAL( P1CASLAT, ( 3 << 1 ) );  
 		// CAS LATENCY REGISTER, 32-bit DRAM controller CAS latency register, P1CASLAT (reset value -> 0b110)
 		// [0], CAS Half cycle, 0 = Zero cycle offset to value in [3:1]. 1 = Half cycle offset to the value in [3:1].
 		// [3:1], CAS Latency, CAS latency in memory clock cycles.
@@ -177,17 +177,33 @@ int sdram_init()
 
 	// [19:18], Memory command, Determines the command required;
 	// [22], Extended Memory command 
-	//		3’b000 = Prechargeal
-	//		3’b01 = Autorefresh
-	//		3’b10 = Modereg or Extended modereg access
-	//		3’b11 = NOP
-	//		3’100 = DPD (Deep Power Down)
+	//		3'b000 = Prechargeal
+	//		3'b001 = Autorefresh
+	//		3'b010 = Modereg or Extended modereg access
+	//		3'b011 = NOP
+	//		3'b100 = DPD (Deep Power Down)
 	VI_SET_VAL( P1DIRECTCMD, 0xc0000 ); 					// NOP, 		1100 0000 0000 0000 0000
 	VI_SET_VAL( P1DIRECTCMD, 0x00000 );						// precharge
 	VI_SET_VAL( P1DIRECTCMD, 0x40000 );						// auto refresh
 	VI_SET_VAL( P1DIRECTCMD, 0x40000 );						// auto refresh
-	VI_SET_VAL( P1DIRECTCMD, 0xa0000 ); 					// EMRS,		1010 0000 0000 0000 0000
-	VI_SET_VAL( P1DIRECTCMD, 0x80032 ); 					// MRS, 		1000 0000 0000 0011	0010
+	// Extended Mode Register Set (EMRS)
+	// The extended mode register is designed to support for the desired operating modes of DDR SDRAM.
+	VI_SET_VAL( P1DIRECTCMD, 0xa0000 ); 					// EMRS,		1010 0000 0000 0000 0000 
+															// [17:16] = 	  10, BA1 = 1, BA0 = 0;
+															// [7:5]   = 		           000, Driver Strength = full;
+															// [2:0]   =                         000, PASR = Full Array;
+	// Mode Register Set (MRS) 
+	// The mode register is designed to support the various operating modes of Mobile DDR SDRAM.
+	// MRS寄存器设计用来支持多种操作模式下的Mobile DDR SDRAM.
+	// It includes Cas latency, addressing mode, burst length, test mode and vendor specific options to make Mobile DDR SDRAM useful for variety of applications.
+	// Two clock cycles are required to complete the write operation in the mode register.
+	// This command must be issued only when all banks are in the idle state.
+	// MRS模式下的寄存器配置有固定的要求: K4X2G323PD-8GD8_90F_8x13_R10.pdf - 8.1 Mode Register Set (MRS)
+	VI_SET_VAL( P1DIRECTCMD, 0x80032 ); 	// MRS, 		1000 0000 0000 0011	0010
+											//      [17:16] = 00, BA1 = 0, BA0 = 0; 
+											//     	[6:4]   =               011, CAS Latency, 3; 必须和P1CASLAT寄存器的配置相同
+											//		[3]     =                   0, Burst Type; 0-Sequential, 1-Interleave; 
+											//		[2:0]	=                    010, Burst Length; 010, 4;
 
 	VI_SET_VAL( MEM_SYS_CFG, 0x0 );
 					
