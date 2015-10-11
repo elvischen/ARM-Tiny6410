@@ -204,8 +204,20 @@ int sdram_init()
 											//     	[6:4]   =               011, CAS Latency, 3; 必须和P1CASLAT寄存器的配置相同
 											//		[3]     =                   0, Burst Type; 0-Sequential, 1-Interleave; 
 											//		[2:0]	=                    010, Burst Length; 010, 4;
+	// 注意在设置EMRS/MRS寄存器时，不能分开赋值。下面是错误的代码:
+		// VI_SET_NBIT( P1DIRECTCMD, 18, 2, 0x0); /* EMRS */
+		// VI_SET_NBIT( P1DIRECTCMD, 16, 2, 0x2); /* EMRS Bank Addr */
+		// VI_SET_NBIT( P1DIRECTCMD, 0, 13, 0x0);
 
+
+	// S3C6410的DRAM控制器是基于 ARM PrimeCell CP003 AXI DMC(PL340)，
+	// S3C6410的存储器端口0并不支持DRAM，所以只能选用存储器端口1（DMC1）。
+	// S3C6410的DMC1基址ELFIN_DMC1_BASE的值为0x7e00_1000。
+	// 当DMC1使用32位数据线DRAM时，需要配置MEM_SYS_CFG寄存器，将芯片管脚Xm1DATA[31:16]设置为DMC1的数据域。
 	VI_SET_VAL( MEM_SYS_CFG, 0x0 );
+	//	MEM_SYS_CFG, [7], ADDR_EXPAND, Set usage of Xm1DATA[31:16] pins.
+	//		0 = Xm1DATA[26:16] pins are used for DMC1 upper halfword data field, data[26:16].
+	//		1 = Xm1DATA[26:16] pins are used for SROMC upper 11-bit address field, address[26:16].
 					
 	/* 4. 使dramc进入"ready"状态	*/
 	VI_SET_VAL( P1MEMCCMD, 0x000 );
