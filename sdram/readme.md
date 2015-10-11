@@ -22,8 +22,9 @@ Halogen Free FBGA90
 	K:		SAMSUNG Memort
 	4:	 	DRAM
 	X:		Mobile DDR SDRAM
-	2G:	2G, 8K/64ms
-	32:	x32 (bit organization)		3:		4 of Internal Banks
+	2G:		2G, 8K/64ms
+	32:		x32 (bit organization)
+	3:		4 of Internal Banks
 	P:		LVTTL, 1.8V, 1.8V
 	D:		5th Generation
 	
@@ -32,6 +33,28 @@ Halogen Free FBGA90
 **DDR SDRAM**:    
 Double Rate Synchronous Dynamic Random Access Memory    
 双倍速率传输，在时钟的上升沿和下降沿均可传输数据。
+
+**2G, x32**
+表示此SDRAM的容量为2G bit (64M x 32bit), 即256MB:
+
+* 地址总数（存储单元总数） 64M
+* 位宽（存储单元容量）32 bit
+
+由芯片手册<K4X2G323PD-8GD8_90F_8x13_R10.pdf>可知:  
+
+* Bank Address(BA0,BA1)，即4个Bank
+* Row Address (A0 ~ A13)，即有2^14行;
+* Column Address (A0 ~ A9)，即2^10列;
+
+		地址总数（存储单元总数） = 4 Bank x 2^14行 x 2^10列 = 67108864单元 = 64 x 1024 x 1024 = 64M
+
+DDR SDRAM的行地址和列地址共用同一地址总线，这个地址总线何时被用来做行地址或列地址，在DDR SDRAM数据手册中有详细的时序定义。
+
+**8k/64ms**   
+64ms，表示此SDRAM芯片的刷新时间(Refresh interval time)为64ms。   
+目前公认的标准是，存储单元中电容的数据有效保存上限是64ms(1000ms = 1 s)。   
+也就是说SDRAM存储单元中每一行新的循环周期都是64ms。   
+8k/64ms，每8k行的扫描周期为64ms。相当于每一行扫描时间是64ms / 8k行 = 7.8125us(1000us = 1ms)。
 
 ----
 
@@ -77,19 +100,45 @@ DRAM控制器可以通过配置**兼容SDRAM类型芯片**。通过向DRAM控制
 DRAM控制器支持最多两个相同类型的内存芯片，每个芯片最大容量256M。所有芯片共享相同引脚（时钟使能引脚和片选引脚除外），如表所示给出了DRAM控制器的外部存储器引脚配置信息。![Memory Port 1 Pin Description](images/1.jpg)
 ####  SDRAM INITIALIZATION SEQUENCE - DDR/MOBILE DDR SDRAM在系统上电后，必须通过软件配置SDRAM接入DRAM控制器并且初始化DRAM控制器，下面给出DDR、MOBILE DDR SDRAM的初始化流程。
 
-a) 向mem_cmd寄存器写入2b10，使其进入NOP工作状态
+1. Program memc_cmd to ‘3’b100’, which makes DRAM Controller enter ‘Config’ state.
+2. Write memory timing parameter, chip configuration, and id configuration registers.    根据SDRAM芯片手册的数据进行配置。    
+	**memory timing parameter** :
+	
+	* 刷新周期, P1REFRESH
+	* P1CASLAT
+	* P1T_DQSS
+	* P1T_MRD
+	* P1T_RAS
+	* P1T_RC
+	* P1T_RCD
+	* P1T_RFC
+	* P1T_RP
+	* P1T_RRD
+	* P1T_WR
+	* P1T_WTR
+	* P1T_XP
+	* P1T_XSR
+	* P1T_ESR
+	
+	**chip configuration** :
+	
+	* P1MEMCFG
+	* P1MEMCFG2
+	
+	**id configuration** :
+	
+	* P1_chip_0_cfg
+	3. Wait 200us to allow SDRAM power and clock to stabilize. However, when CPU starts working, power and clock would already be stabilized.4. Execute memory initialization sequence.
+	1. Program mem_cmd in direct_cmd to ‘2’b10’, which makes DRAM Controller issue ‘NOP’ memory command.向mem_cmd寄存器写入2b10，使其进入NOP工作状态。
+	2. Program mem_cmd in direct_cmd to ‘2’b00’, which makes DRAM Controller issue ‘Prechargeall’ memory command.向mem_cmd寄存器写入2b00，使其进入Prechargeall（整片预充电）工作状态。
+	3. Program mem_cmd in direct_cmd to ‘2’b11’, which makes DRAM Controller issue ‘Autorefresh’ memory command.向mem_cmd寄存器写入2b11，使其进入Autorefresh（自刷新）工作状态。
+	4. Program mem_cmd in direct_cmd to ‘2’b11’, which makes DRAM Controller issue ‘Autorefresh’ memory command.再次向mem_cmd寄存器写入2b11，使其进入Autorefresh（自刷新）工作状态。
+	5. Program mem_cmd to ‘2’b10’ in direct_cmd, which makes DRAM Controller issue ‘MRS’ memory command − Bank address for EMRS must be set.向mem_cmd寄存器写入2b10，使其进入MRS工作状态，并且地址空间内的EMRS必须置位。
+	6. Program mem_cmd to ‘2’b10’ in direct_cmd, which makes DRAM Controller issue ‘MRS’ memory command. − Bank address for MRS must be set.再次向mem_cmd寄存器写入2b10，使其进入MRS工作状态，并且地址空间内的MRS必须置位。
 
-b) 向mem_cmd寄存器写入2b00，使其进入Prechargeall（整片预充电）工作状态
+5. Program memc_cmd to ‘3’b000’, which makes DRAM Controller enter ‘Ready’ state.
 
-c) 向mem_cmd寄存器写入2b11，使其进入Autorefresh（自刷新）工作状态
-
-d) 再次向mem_cmd寄存器写入2b11，使其进入Autorefresh（自刷新）工作状态
-
-e) 向mem_cmd寄存器写入2b10，使其进入MRS工作状态，并且地址空间内的EMRS必须置位
-
-f) 再次向mem_cmd寄存器写入2b10，使其进入MRS工作状态，并且地址空间内的MRS必须置位
-
-备注：程序中并没有使用这种配置方法，而是DRAM CONTROLLER INITIALIZATION SEQUENCE。上述方法未测试。
+6. Check memory status field in memc_stat until memory status becomes ‘2’b01’, which means ‘Ready’.
 
 ----
 
