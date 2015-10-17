@@ -76,7 +76,8 @@ void mmu_init(void)
 	// 方法2:
 	virtul_addr   = 0x10000000;
 	physical_addr = 0x7F000000;
-	*(table + (virtul_addr >> 20)) = (physical_addr & 0xFFFC0000) | MMU_SECTION_NCNB;
+	// Section base address: [31:20] , 0xFFF0_0000,只取实际地址的前12位放在段描述符中;
+	*(table + (virtul_addr >> 20)) = (physical_addr & 0xFFF00000) | MMU_SECTION_NCNB;
 	// (0x1000_0000 >> 20) == 0x100;
 
 	// Stepping Stone的起始物理地址为0，第一部分程序(Start.S)的起始运行地址就是0 (链接地址为0, 程序相关跳转都与该地址有关)
@@ -84,24 +85,47 @@ void mmu_init(void)
 	//table[0]     = 0 | MMU_SECTION_WB; 		     // MMU使能(bl mmu_init)前后的代码所在的1M空间, 保持它们的虚拟地址等于物理地址
 	virtul_addr   = 0x0;
 	physical_addr = 0x0;
-	*(table + (virtul_addr >> 20)) = (physical_addr & 0xFFFC0000) | MMU_SECTION_WB;
+	*(table + (virtul_addr >> 20)) = (physical_addr & 0xFFF00000) | MMU_SECTION_WB;
 
 
 	//table[0xc00] = 0x50000000 | MMU_SECTION_WB;  // MVA: 0xc0000000 => PA: 0x50000000, SDRAM开头的1M空间 
 	//  0x5000_0000 ~ 0x5010_0000 , 1M Bytes, ==>  0xC000_0000 ~ 0xC010_0000;
 	virtul_addr   = 0xC0000000;
 	physical_addr = 0x50000000;
-	*(table + (virtul_addr >> 20)) = (physical_addr & 0xFFFC0000) | MMU_SECTION_WB;
+	*(table + (virtul_addr >> 20)) = (physical_addr & 0xFFF00000) | MMU_SECTION_WB;
 
 	// ---- 2. 启动MMU ----
 	// ARM体系架构与编程; 嵌入汇编：LINUX内核完全注释
+		// ARM体系结构中, 存储系统通常是通过系统控制协处理器CP15完成的
+		// CP15包含16个32位的寄存器，其编号为0~15。
+		// MCR   ARM寄存器到协处理器寄存器的数据传送
+				// MCR指令将ARM处理器的寄存器中的数据传送到协处理器的寄存器中。
+				// 如果协处理器不能成功地执行该操作，将产生未定义的指令异常中断。
+		// MRC   协处理器寄存器到ARM寄存器的数据传送
+	// 参考: http://6xudonghai.blog.163.com/blog/static/336406292008724103317304/
 	__asm__ (
 			"mov    r1, #0\n"
+			// 将寄存器r1的值传给p15协处理器的c7寄存器;
+			// p15-c7, Cache operations,用于管理指令缓存和数据缓存。 只可写;
+			// 对该寄存器的写操作所实现的功能，是通过MCR指令中的opcode_2和CRm两者的组合来选择的，具体组合详见数据手册。
 			"mcr    p15, 0, r1, c7, c7, 0\n"    /* 使无效ICaches和DCaches */
-
+			// MCR{cond}   p15,{opcode_1},<Rd>,<CRn>,<CRm>{,opcode_2}
+			// MCR2        p15,{opcode_1},<Rd>,<CRn>,<CRm>{,opcode_2}
+				// p15, 指定协处理器
+				// <cond>为指令执行的条件码, 当<cond>忽略时指令为无条件执行。
+				// <opcode_1>为协处理器将执行的操作的操作码。对于CP15协处理器来说， <opcode_1>永远为0b000,当<opcode_1>不为0b000时，该指令操作结果不可预知。 
+				// <Rd>作为元寄存器的ARM寄存器，其值被传送到得协处理器寄存器中。 <Rd>不能为PC，当其为PC时，指令操作结果不可预知。 
+				// <CRn>作为目标寄存器的协处理器寄存器，其编号可能为C0,C1....,C15。   
+				// <CRm>作为"附加的"目标寄存器或者原操作数寄存器，用于区分同一个编号的不同物理寄存器;如果不需要，就将它设置为C0，否则结果不可预知;
+				// <opcode_2>提供附加信息，用于区别同一个编号的不同物理寄存器。当指令中指定附加信息时，省略<opcode_2>或者将其指定为0,否则指令操作结果不可预知。
 			"mcr    p15, 0, r1, c7, c10, 4\n"   /* drain write buffer on v4 */
+			// 将寄存器r1的值传给p15协处理器的c8寄存器;
+			// p15-c8, TLB operations, 管理TLB, 只可写;
 			"mcr    p15, 0, r1, c8, c7, 0\n"    /* 使无效指令、数据TLB */
 
+			// 将占位符%0的值传给p15协处理器的c2寄存器;
+			// p15-c2, Translation table base, 页表基址寄存器;
+			// p15-c3, Domain access control, 访问域权限控制器;
 			"mcr p15, 0, %0, c2, c0, 0\n" /* write TTB register */
 			"mrc p15, 0, r1, c3, c0, 0\n" /* read domain 15:0 access permissions */
 			"orr r1, r1, #3\n"            /* domain 0, Accesses are not checked */
@@ -147,4 +171,15 @@ void mmu_init(void)
 			: "r" (table)
 			: "r1"
 			);
+	// 嵌入式汇编的一般形式:
+	// __asm__ __volatile__ ("<asm routine>" : output : input : modify);
+		// 输出部分(output):用以规定对输出变量（目标操作数）如何与寄存器结合的约束(constraint),
+		// 输出部分可以有多个约束，互相以逗号分开。每个约束以“＝”开头，接着用一个字母来表示操作数的类型
+		// 然后是关于变量结合的约束。
+		// 
+		// 输入部分(Input):输入部分与输出部分相似，但没有“＝”
+		//
+		// 修改部分(modify):这部分常常以“memory”为约束条件，以表示操作完成后内存中的内容已有改
+		// 如果原来某个寄存器的内容来自内存, 那么现在内存中这个单元的内容已经改变。
+
 }
