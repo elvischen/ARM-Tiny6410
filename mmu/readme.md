@@ -74,37 +74,6 @@ MMU参考：
 * [ARM MMU工作原理剖析](http://blog.chinaunix.net/uid-20698426-id-136197.html)
 
 
-
-----
-
-
-###MMU.lds
-链接脚步中，配置起始地址为0xc000_0000，该地址为虚拟地址。
-
-	1 SECTIONS {
-	2     . = 0xc0000000;
-	3
-	4     .text : {
-	5             start.o
-	6             sdram.o
-	7             mmu.o
-	8             clock.o
-	9             * (.text)
-	10     }
-	11
-	12     .rodata : {
-	13             * (.rodata)
-	14     }
-	15
-	16     .data : {
-	17             * (.data)
-	18     }
-	19
-	20     bss_start = .;
-	21     .bss ALIGN(4)  : { *(.bss)  *(COMMON) }
-	22     bss_end = .;
-	23 }
-
 ----
 
 
