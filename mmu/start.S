@@ -113,12 +113,12 @@ clean_loop:
 	bne clean_loop	
 	//}}}
 	
+on_ddr:
 	//{{{ ----9. MMU配置----
-	bl mmu_init  
+//	bl mmu_init  
 	//}}}
 
 	//{{{ ---10. 调用main函数----
-on_ddr:
 	ldr pc, =main
 	//}}}
 halt:
