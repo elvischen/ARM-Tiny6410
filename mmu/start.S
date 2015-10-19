@@ -50,10 +50,10 @@ _start:		//_start, 记录这段汇编代码的开始地址
 	// 设置栈，其实就是设置SP寄存器，让其指向一块可用的内存。
 	// SD 启动时，S3C6410的内部8K的SRAM被映射到0X0C000000，而ARM 默认的栈是递减的，所以可以让SP 指向0X0C002000；
 	ldr sp, =0x0c002000	//栈可用空间: 0x0c002000 ~ 0x0c000000;
-	// S3C6410内部8K SRAM的映射地址也为0x0;
-	//ldr sp, =8*1024			//栈可用空间: 0x00000000 ~ 0x00008000;
 	//}}}
 
+	// 如果在MMU配置之前开启了icache, 会导致程序无法运行; 通过屏蔽/取消屏蔽此段代码，对比程序结果;
+	/*
 	//{{{ ----4. 开启icache----
 	// icache - instruction cache 指令高速缓冲存储器; 启动后提高CPU取指效率;
 	// dcache - data cache, 数据高速缓冲存储器;
@@ -69,7 +69,9 @@ _start:		//_start, 记录这段汇编代码的开始地址
 #endif
 	mcr	p15, 0, r0, c1, c0, 0
 	//}}}
+	*/
 
+	// 屏蔽5.设置时钟，可以观测LED闪烁速度的变化
 	//{{{ ----5. 设置时钟----
 	bl clock_init
 	//}}}
@@ -112,14 +114,15 @@ clean_loop:
 	cmp r0, r1
 	bne clean_loop	
 	//}}}
-	
+
 on_ddr:
 	//{{{ ----9. MMU配置----
-//	bl mmu_init  
+	bl mmu_init  
 	//}}}
-
+	
 	//{{{ ---10. 调用main函数----
 	ldr pc, =main
 	//}}}
+
 halt:
 	b halt	

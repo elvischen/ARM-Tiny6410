@@ -1,13 +1,20 @@
-SECTIONS {
+SECTIONS 
+{
+	/* 指定定位器符号 */
+	/* Stepping Stone中运行, 不能使用0x00000000地址*/
+	/*. = 0x0C000000;*/
+
+	/* 内存中运行 */
     . = 0x50000000;
-    
+
+	/* 先存放.text 代码段, 再存放.data 数据段, 最后存放 .bss 数据段 */
 	.text : {
 			start.o
-			main.o
 			clock.o
-			leds.o
 			sdram.o
 			mmu.o
+			main.o
+			leds.o
 			* (.text)
 	}
 
@@ -17,18 +24,15 @@ SECTIONS {
     	* (.rodata)
     }
 
-    . = ALIGN(4);
-	.data :
-	{
+    /*. = ALIGN(4);*/
+	.data : {
 		* (.data)
 	}
 
-    . = ALIGN(4);
+    /*. = ALIGN(4);*/
     bss_start = .;
-	.bss :
-	{
+	.bss : {
 		* (.bss)    
-		* (.common)
 	}
     bss_end = .;
 }

@@ -20,9 +20,7 @@
 ****************************************************************/
 
 #include "leds.h"
-
-// 打开或关闭，决定是否使用虚拟地址来配置LED, 用于检测MMU是否配置成功
-#define MMU_VIRSUAL_ADDRESS
+#include "mmu.h"
 
 #define LEDS_NUMBER		4
 
@@ -54,6 +52,7 @@
 	#define GPKCON0 (*(volatile unsigned long *)0x10008800)
 	#define GPKDAT (*(volatile unsigned long *)0x10008808)
 #endif
+
 //LED - 配置GPKCON[4-7]位为输出, (0001, output)
 #define	GPK4_out	(1<<(4*4)) 	// bit16 = 1
 #define	GPK5_out	(1<<(5*4))	// bit20 = 1
