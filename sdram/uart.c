@@ -186,3 +186,18 @@ void UART0_SendString(char *string)
 }
 
 //}}}
+
+// {{{ UART0 - 以十进制数字形式打印char型数据
+void UART0_SendData8(unsigned char data)
+{
+	// unsigned char, 8bit, 0~255
+	int hundreds = data / 100;
+	int tens = data % 100 / 10;
+	int digits = data % 10;
+
+	UART0_PutChar(hundreds + '0');
+	UART0_PutChar(tens + '0');
+	UART0_PutChar(digits + '0');
+
+}//}}}
+

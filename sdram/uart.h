@@ -31,4 +31,7 @@ char UART0_GetChar();
 // 发送一段字符串
 void UART0_SendString(char *string);
 
+// 以十进制数字形式打印char型数据
+void UART0_SendData8(unsigned char data);
+
 #endif
