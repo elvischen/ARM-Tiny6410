@@ -13,6 +13,7 @@
 #include "uart.h"
 #include "nand.h"
 
+//extern NAND_ID[];
 int main()
 {
 	char data;
@@ -27,10 +28,7 @@ int main()
 	//UART0_SendString("Hello World!\n");
 
 
-	UART0_SendString("Read Nand Flash ID:\n\r");
-	data = nand_read_ID();
-	UART0_SendData32(data);
-	UART0_SendString("\n\r");
+	nand_readID();
 
 	while(1)
 	{

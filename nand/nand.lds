@@ -13,8 +13,9 @@ SECTIONS
 			clock.o
 			sdram.o
 			main.o
-			leds.o
 			nand.o
+			leds.o
+			uart.o
 			* (.text)
 	}
 

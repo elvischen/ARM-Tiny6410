@@ -8,7 +8,9 @@
     > Last Changed: 
     > Description:		S3C6410 Nand Flash Controller - Nand Flash (K9K8G08U0E)
 ****************************************************************/
+
 #include "nand.h"
+#include "uart.h"
 // HCLK: clock.c, 133M HZ, (7.5ns)
 
 // TACLS/TWRPH0/TWRPH1 - S3C6410X.pdf - Chater 8 - Pages 3 - NAND FLASH MEMORY TIMING
@@ -172,10 +174,10 @@ void nand_init(void)
 	NFCONT_REG |= (0x3<<0); // NAND Flash Controller Enable; Xm0CSn2 signal control;
 } // }}}
 
-// Read ID
-// {{{ static int nand_read_ID(void);
+// Read ID, 串口UART0输出
+// {{{ void nand_readID(void);
 // K9F4G(K8G)08U0D_0.2.pdf - 4.17 Read ID Operation
-static char nand_read_ID(void)
+void nand_readID(void)
 {
 	char i = 0; 
 	char id[6] = {0,0,0,0,0,0};
@@ -190,15 +192,48 @@ static char nand_read_ID(void)
 	NFADDR_REG = 0;
 
 	// Read ID
-	for(i = 0; i < 6; i++)
-		id[i] = NFDATA8_REG;
 
-	return id[0];
+	UART0_SendString("Read Nand Flash ID:\n\r");
+	for(i = 0; i < 6; i++)
+	{
+		id[i] = NFDATA8_REG;
+		UART0_SendData32(id[i]);
+		UART0_SendString("\n\r");
+	}
+
+	/* Output:
+	   Read Nand Flash ID:
+	   0xEC
+	   0xD3
+	   0x51
+	   0x95
+	   0x59
+	   0xEC
+	*/
+	// 1st Byte, Maker Code, 0xEC;
+	// 2nd Byte, Device Code, K9K8G08U0D为0xD3;
+	// 3rd Byte, 0x51, 0b0101_0001, Support Interleave Program, 2 Level Cell, 2 Internal Chip; 
+	//			[7], Cache Program, 0:Not Support, 1: Support; 
+	//			[6], Interleave Program Between multiple chips, 0: Not Support, 1: Support;
+	//			[5:4], Number of Simultaneously Programmed Pages; 00, 1; 01, 2; 10, 4; 11, 8;
+	// 			[3:2], Cell Type; 00, 2 Level Cell Type; 01, 4; 10, 8; 11, 16;
+	//			[1:0], Internal Chip Number; 00, 1; 01, 2; 10, 4; 11, 8;
+	// 4th Byte, 0x95, 0b1001_0101;
+	//			25ns, x8, 128kb Block size, 16 Area, 2kb Page Size;
+	//			[7],[3], 0b10, Serial Access Minimum = 25ns;
+	//			[6], Organization; 0, x8; 1, x16; 
+	//			[5:4], Block Size; 00, 64kb; 01, 128kb; 10, 256kb; 11, 512kb;
+	//			[2], Redundant Area Size ( byte/512byte); 0, 8; 1, 16;
+	//			[1:0], Page Size(w/o redundant area ); 00, 1kb; 01, 2kb; 10, 4kb; 11, 8kb;
+	// 5th Byte, 0x59, 0b0101_1001;
+	//			[6:4], 3b101, Plane Size = 2G;
+	//			[3:2], 2b10, Plane Number = 4; 
+	// 6th Byte, 0xEC;
 } // }}}
 
 // 读一页，即2048byte
 // {{{ static int nandll_read_page (unsigned char *buf, unsigned long addr);
-static int nandll_read_page (unsigned char *buf, unsigned long addr)
+int nandll_read_page (unsigned char *buf, unsigned long addr)
 {
 
 	int i;
