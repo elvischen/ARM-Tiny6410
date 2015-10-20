@@ -25,6 +25,26 @@ int main()
 	UART0_SendString("Hello World!\n\r");
 	//UART0_SendString("Hello World!\n");
 
+	UART0_SendString("Send Data 8:");
+	UART0_SendString("\n\r");
+	UART0_SendData8(123);
+	UART0_SendString("\n\r");
+	UART0_SendData8(0xFF);
+	UART0_SendString("\n\r");
+
+	UART0_SendString("Send Data 32:");
+	UART0_SendString("\n\r");
+	UART0_SendData32(0x1234);
+	UART0_SendString("\n\r");
+	UART0_SendData32(0x1234ABCD);
+	UART0_SendString("\n\r");
+	UART0_SendData32(0xABCD);
+	UART0_SendString("\n\r");
+	UART0_SendData32(0x1234ABCD);
+	UART0_SendString("\n\r");
+	UART0_SendData32(0x1);
+	UART0_SendString("\n\r");
+
 	while(1)
 	{
 		data = UART0_GetChar();

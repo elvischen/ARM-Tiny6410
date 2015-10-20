@@ -187,7 +187,7 @@ void UART0_SendString(char *string)
 
 //}}}
 
-// {{{ UART0 - 以十进制数字形式打印char型数据
+// {{{ UART0 - 以十进制数字形式打印unsigned char型数据
 void UART0_SendData8(unsigned char data)
 {
 	// unsigned char, 8bit, 0~255
@@ -201,3 +201,35 @@ void UART0_SendData8(unsigned char data)
 
 }//}}}
 
+//{{{ UART0 - 以十六进制数字形式打印unsigned lont int型数据
+void UART0_SendData32(unsigned long int data)
+{
+	char hex_string[] = "00000000";
+	unsigned char ch = 0;
+	char index = 8;
+	
+	while(data)
+	{
+		// 获得最低4bit数据
+		ch = (unsigned char)(data & 0x0000000F);
+		
+		switch(ch)
+		{
+			case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8:case 9:
+				hex_string[index-1] = '0'+ch;
+				break;
+			case 10:case 11:case 12:case 13:case 14:case 15:
+				hex_string[index-1] = 'A'+ ch - 10;
+				break;
+			default:
+				hex_string[index-1] = 'X';
+				break;
+		}	
+		data = data >> 4;
+		index--;
+	}
+
+	UART0_SendString("0x");
+	UART0_SendString(&hex_string[index]);
+
+} // }}}
