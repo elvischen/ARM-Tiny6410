@@ -10,7 +10,7 @@ Tiny6410 - NAND Flash Controller
 1. NAND Flash memory I/F: Support 512Bytes and 2KB Page .2. Software mode: User can directly access NAND flash memory. for example this feature can be used in read/erase/program NAND flash memory.3. Interface: 8-bit NAND flash memory interface bus.4. Hardware ECC generation, detection and indication (Software correction).5. Support both SLC and MLC NAND flash memory : 1-bit ECC, 4-bit and 8-bit ECC for NAND flash.(Recommend: 1bit ECC for SLC, 4bit and 8bit ECC for MLC NAND Flash)6. SFR I/F: Support Byte/half word/word access to Data and ECC Data register, and Word access to other registers7. SteppingStone I/F: Support Byte/half word/word access.8. The Steppingstone 8-KB internal SRAM buffer can be used for another purpose . (S3C6410 Stepping Stone: 0x0C000000 ~ 0x0C001FFF (8K) )
 
 ### NAND Flash Chip
-SAMSUNG K9K8G08U0E-SCB0, 8G bit Nand Flash,1Gx8 SLC   
+SAMSUNG K9K8G08U0E-SCB0, 8G bit Nand Flash,1Gx8 SLC(1G字节)        
 K9F4G08U0E , K9K8G08U0E, 同一个芯片手册;
 
 型号说明：
@@ -25,12 +25,16 @@ K9F4G08U0E , K9K8G08U0E, 同一个芯片手册;
 	- Supply Voltage: U = 2.7V to 3.6V
     - Mode: 0 = Normal
 	- Generation: E = 6th generation
+	
 
 ![Array Organization](Array Organization.png)
 
+K9K8G08U0E:     
+
 * 1 Page = (2K + 64) Bytes
 * 1 Block = (2k + 64)B x 64 Pages = (128K + 4K) Bytes
-* 1 Device = (2K + 64)B x 64 Pages x 4,096 Blocks = 4,224 Mbits
+* 1 Device = (2K + 64)B x 64 Pages x 8,192 Blocks = 8,448 Mbits = (8192 + 256)Mbits    
+* 其中可用空间为8192Mbits(1GB), 另外256Mbits(32M)存放ECC校验码;
 
 ![Functional Block Diagram](Functional Block Diagram.jpg)
 NAND芯片只有8条I/O线，命令、地址、数据都要通过这8个I/O口输入输出。这种形式减少了NAND芯片的引脚个数，并使得系统很容易升级到更大的容量（强大的兼容性）。
@@ -38,17 +42,16 @@ NAND芯片只有8条I/O线，命令、地址、数据都要通过这8个I/O口�
 * 写入命令、地址或数据时，都要将WE#,CE#信号同时拉低
 * 数据在WE#信号的上升沿被NAND Flash锁存
 * 命令锁存信号CLE，地址锁存信号ALE用来分辨、锁存命令/地址。
-* K9K8G08U0E的512MB存储空间，需要29位地址(2^29 = 512MB)，因此以字节为单位访问Nand Flash时需要5个地址序列：
-	* 1st Cycle, 列地址低位地址(A0~A7)
-	* 2st Cycle, 列地址高位地址(A8~A11), 2^11 = 每块每页2k列
-	* 3st Cycle, 行地址地位地址(A12~A19)
-	* 4st Cycle, 行地址中位地址(A20~A27)
-	* 5st Cycle, 行地址高位地址(A28~A29), 2^16 = 每块64K页
-* 行地址(A12~A29):
-	* 页地址(Page Address): A12 ~ A17, 64页
-	* 层地址(Plane Address): A18, 2 Plane结构
-	* 块地址(Block Address): A19 ~ A29, 2048块
-	* 每层都有2048块，一共4096块;
+* K9K8G08U0E的1GB存储空间，需要30位地址(2^30 = 1GB, address[29:0])，因此以字节为单位访问Nand Flash时需要5个地址序列：
+	* 1st Cycle, (A0~A7)
+	* 2st Cycle, (A8~A11)
+	* 3st Cycle, (A12~A19)
+	* 4st Cycle, (A20~A27)
+	* 5st Cycle, (A28~A29)
+* 列地址(A0~A10), 11根地址线, 从0x000 ~ 0x7ff(0b0111\_1111\_1111), 共2^11=2048个字节;
+* 行地址(A11~A29), 19根地址线, 2^19=512K个页面;
+	* 页地址(Page Address): A11 ~ A16, 2^6=64页;
+	* 块地址(Block Address): A17 ~ A29, 2^13=8192块;
 
 * **SLC**    
 	传统上，每个存储单元内存储1个信息比特，称为单阶存储单元（Single-Level Cell,SLC），使用这种存储单元的闪存也称为单阶存储单元闪存（SLC flash memory），或简称SLC闪存。SLC闪存的优点是传输速度更快，功率消耗更低和存储单元的寿命更长。然而，由于每个存储单元包含的信息较少，其每百万字节需花费较高的成本来生产。
