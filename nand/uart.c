@@ -230,6 +230,9 @@ void UART0_SendData32(unsigned long int data)
 	}
 
 	UART0_SendString("0x");
-	UART0_SendString(&hex_string[index]);
+	if(index == 8)
+		UART0_SendString("0");
+	else
+		UART0_SendString(&hex_string[index]);
 
 } // }}}

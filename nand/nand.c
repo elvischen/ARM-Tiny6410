@@ -5,7 +5,7 @@
     > Author:            < Sean Guo >
     > Mail:              < iseanxp+code@gmail.com >
     > Created Time:      < 2015/10/20 >
-    > Last Changed: 
+    > Last Changed:      < 2015/10/21 >
     > Description:		S3C6410 Nand Flash Controller - Nand Flash (K9K8G08U0E)
 ****************************************************************/
 
@@ -13,6 +13,10 @@
 #include "uart.h"
 // HCLK: clock.c, 133M HZ, (7.5ns)
 
+#define NAND_PAGE_SIZE		2048		// 1 Page = (2k + 64) Bytes
+#define NAND_PAGE_MASK		(NAND_PAGE_SIZE - 1)		// 0b0011_1111_1111, 0x3FF
+
+// {{{ NFCONF参数配置
 // TACLS/TWRPH0/TWRPH1 - S3C6410X.pdf - Chater 8 - Pages 3 - NAND FLASH MEMORY TIMING
 // K9F4G(K8G)08U0D_0.2.pdf - 4.1 Command Latch Cycle, 时序参数要求;
 // 表示CLE/ALE的维持时间(hold time)
@@ -31,6 +35,7 @@
 #define NFCONF_ECC_TYPE		(0x0)			// 00, 1-bit ECC;
 #define NFCONF_MSGLENGTH	(0x0)
 #define NFCONF_MLCCLKCTRL	(0x0)
+// }}}
 
 // {{{ Nand Register Define
 // Nand Register Base Address: 0x7020_0000
@@ -113,7 +118,6 @@
 #define NFMECC1_REG          	__REG(ELFIN_NAND_BASE+NFMECC1_OFFSET)
 #define NFSECC_REG           	__REG(ELFIN_NAND_BASE+NFSECC_OFFSET)
 #define NFMLCBITPT_REG         	__REG(ELFIN_NAND_BASE+NFMLCBITPT_OFFSET)
-//}}}
 
 #define NAND_DISABLE_CE()	(NFCONT_REG |= (1 << 1))
 #define NAND_ENABLE_CE()	(NFCONT_REG &= ~(1 << 1))
@@ -121,6 +125,7 @@
 // [0], RnB (Read-only), 0: busy, 1: ready;
 // 等待Ready信号;
 #define NF_TRANSRnB()		do { while(!(NFSTAT_REG & (1 << 0))); } while(0)
+//}}}
 
 // {{{ NAND Flash Commands
 // Standard NAND flash commands
@@ -144,7 +149,14 @@
 #define NAND_CMD_WRITE_COPYBACK_START	0x10	// Copy-Back Program (85h, 10h) 
 // }}}
 
-#define MEM_SYS_CFG     (*((volatile unsigned long *)0x7E00F120))
+// delay little time
+// {{{ delay
+static void delay(void)
+{
+	static char i = 0;
+	for(i = 0; i < 10; i++)
+		;
+}//}}}
 
 // 设置NAND Flash控制器
 // {{{ void nand_init(void)
@@ -172,36 +184,30 @@ void nand_init(void)
 	// [7], MainECCLock, 0: Unlock Main area ECC 1: Lock Main area ECC;
 	// ...
 	NFCONT_REG |= (0x3<<0); // NAND Flash Controller Enable; Xm0CSn2 signal control;
+
+	// Reset
+	nand_reset();
 } // }}}
 
-// Read ID, 串口UART0输出
-// {{{ void nand_readID(void);
+// Read ID, 存放在数组buffer[0] ~ buffer[5];
+// {{{ void nand_readID(unsigned char* buffer);
 // K9F4G(K8G)08U0D_0.2.pdf - 4.17 Read ID Operation
-void nand_readID(void)
+void nand_readID(unsigned char* buffer)
 {
 	char i = 0; 
-	char id[6] = {0,0,0,0,0,0};
 
 	// 发片选
 	NAND_ENABLE_CE();
-
 	// 发读命令：0x90
 	NFCMD_REG = NAND_CMD_READID;
-
 	// 1st Address 
 	NFADDR_REG = 0;
 
 	// Read ID
-
-	UART0_SendString("Read Nand Flash ID:\n\r");
 	for(i = 0; i < 6; i++)
-	{
-		id[i] = NFDATA8_REG;
-		UART0_SendData32(id[i]);
-		UART0_SendString("\n\r");
-	}
+		buffer[i] = NFDATA8_REG;
 
-	/* Output:
+	/* K9K8G08U0E Output:
 	   Read Nand Flash ID:
 	   0xEC
 	   0xD3
@@ -211,7 +217,7 @@ void nand_readID(void)
 	   0xEC
 	*/
 	// 1st Byte, Maker Code, 0xEC;
-	// 2nd Byte, Device Code, K9K8G08U0D为0xD3;
+	// 2nd Byte, Device Code, K9K8G08U0E为0xD3;
 	// 3rd Byte, 0x51, 0b0101_0001, Support Interleave Program, 2 Level Cell, 2 Internal Chip; 
 	//			[7], Cache Program, 0:Not Support, 1: Support; 
 	//			[6], Interleave Program Between multiple chips, 0: Not Support, 1: Support;
@@ -231,72 +237,140 @@ void nand_readID(void)
 	// 6th Byte, 0xEC;
 } // }}}
 
-// 读一页，即2048byte
-// {{{ static int nandll_read_page (unsigned char *buf, unsigned long addr);
-int nandll_read_page (unsigned char *buf, unsigned long addr)
+// Reset Nand Flash
+//{{{ void nand_reset(void);
+void nand_reset(void)
 {
-
-	int i;
-	int page_size = 2048;	// 1 Page = (2K + 64) Bytes
-
-	// 发片选
+	// 发送片选信号
 	NAND_ENABLE_CE();
+	// 发读Reset命令：0xff
+	NFCMD_REG = NAND_CMD_RESET;
+	// 等待Ready信号
+	//NF_TRANSRnB();
+	nand_wait_idle();
+	//复位完毕, 取消片选信号
+	NAND_DISABLE_CE();
+}
+//}}}
 
-	// 发读命令：0x00
-	NFCMD_REG = NAND_CMD_READ;
+// wait for idle
+// {{{ 等待Nand Flash Ready信号; 
+//添加static关键字，表示为内部函数, 其他文件不可见;
+static void nand_wait_idle(void)
+{
+#define NFSTAT_BUSY 0x1
+	int i = 0;
+	while( !(NFSTAT_REG & NFSTAT_BUSY) )//检查NFSTAT_REG寄存器的bit[0], 低电平表示Busy, 高电平Ready
+		delay();
+
+} //}}}
+
+// 发送地址
+// {{{ static void nand_write_address(unsigned long address)
+static void nand_write_address(unsigned long address)
+{
+	unsigned long page_address = address >> 11;		// Page Size: 2^11=2048B
 
 	// 发地址 ( Column Address (2) + Row Address (3) )
-	// 1st Cycle: 列地址低位地址(A0~A7)
+	// 不需要发送列地址, 直接发0
+	// 1st Cycle: 列地址低位地址
 	NFADDR_REG = 0;
-	// 2st Cycle: 列地址高位地址(A8~A11), 2^11 = 每块每页2k列
+	// 2st Cycle: 列地址高位地址
 	NFADDR_REG = 0;
-	// 3st Cycle, 行地址地位地址(A12~A19)
-	NFADDR_REG = (addr) & 0xff;
-	// 4st Cycle, 行地址中位地址(A20~A27)
-	NFADDR_REG = (addr >> 8) & 0xff;
-	// 5st Cycle, 行地址高位地址(A28~A29), 2^16 = 每块64K页
-	NFADDR_REG = (addr >> 16) & 0xff;
 
-	// 发读命令：0x30
-	NFCMD_REG = NAND_CMD_READ_START;
+	// 3st Cycle, 行地址低位地址
+	NFADDR_REG = (page_address) & 0xff;
+	// 4st Cycle, 行地址中位地址
+	NFADDR_REG = (page_address >> 8) & 0xff;
+	// 5st Cycle, 行地址高位地址
+	NFADDR_REG = (page_address >> 16) & 0xff;
+} //}}}
 
-	// 等待数据, Ready信号;
-	NF_TRANSRnB();
-
-	// 连续读2048个字节
-	for(i = 0; i < page_size; i++)
-	{
-		*buf++ = NFDATA8_REG;
-	}
-
-	// 取消片选
-	NAND_DISABLE_CE();
-
-	return 0;
-}
-// }}}
-
-
-// 从NAND中拷贝代码到DRAM
-// {{{ int copy2ddr(unsigned int nand_start, unsigned int ddr_start, unsigned int len);
-int copy2ddr(unsigned int nand_start, unsigned int ddr_start, unsigned int len)
+// Read a page from start_addr, read (size) bytes to *buffer;
+// {{{ void nand_read_page(unsigned char* buffer, unsigned long start_addr, int size)
+void nand_read_page(unsigned char* buffer, unsigned long start_addr, int size)
 {
-	unsigned char *buf = (unsigned char *)ddr_start;
-	int i;
-	unsigned int page_shift = 11;
+	unsigned long addr = 0;
+	unsigned char data = 0;
+	int index = 0;			
 
-	// 发片选
+	if( (start_addr & NAND_PAGE_MASK) || (size & NAND_PAGE_MASK) )
+	{
+		// 地址 & 0b0011_1111_1111 , 长度 & 0b0011_1111_1111;
+		// 如果地址或长度不对齐，则if判断为true, 程序直接跳出;
+		return;
+	}
+	
+	// 选中芯片
 	NAND_ENABLE_CE();
 
-	// 使len为2048的整数倍
-	len = (len/2048+1)*2048;
-
-	// 循环拷贝，每次拷贝一页数据
-	for (i = 0; i < (len>>page_shift); i++, buf+=(1<<page_shift))
+	//大循环, 每次读取一页数据
+	for( addr = start_addr; addr < (start_addr + size); addr += NAND_PAGE_SIZE)
 	{
-		// 读一页，即2048byte
-		nandll_read_page(buf, i);
+		// 发读Read命令：0x00, 30h
+		NFCMD_REG = NAND_CMD_READ;
+
+		// 发送地址
+		nand_write_address(addr);
+
+		// 发送Read命令
+		NFCMD_REG = NAND_CMD_READ_START;
+
+		// 等待R/nB信号线Ready
+		nand_wait_idle();
+
+		// 读取1 page数据, 即2k Bytes;
+		for( index = 0; index < NAND_PAGE_SIZE; index++)
+			*buffer++ = NFDATA8_REG;
 	}
 
-	return 0;
-} // }}}
+	// 读取完数据, 则取消片选
+	NAND_DISABLE_CE();
+}//}}}
+
+// 把buffer写入addr地址, size必须为页大小的整数倍(2048, 4096 ...)
+//{{{ void nand_write_page(unsigned char* buffer, int size, unsigned long start_addr);
+void nand_write_page(unsigned char* buffer, int size, unsigned long start_addr)
+{
+	unsigned long addr = 0;
+	unsigned char data = 0;
+	int index = 0;			
+
+	if( (start_addr & NAND_PAGE_MASK) || (size & NAND_PAGE_MASK) )
+	{
+		// 地址 & 0b0011_1111_1111 , 长度 & 0b0011_1111_1111;
+		// 如果地址或长度不对齐，则if判断为true, 程序直接跳出;
+		return;
+	}
+	
+	// 选中芯片
+	NAND_ENABLE_CE();
+
+	//大循环, 每次写入一页数据
+	for( addr = start_addr; addr < (start_addr + size); addr += NAND_PAGE_SIZE)
+	{
+		// 发读Write命令：0x80, 0x10
+		NFCMD_REG = NAND_CMD_PAGEPROG;
+		// 发送地址
+		nand_write_address(addr);
+
+		// 写1 page数据, 即2k Bytes;
+		for( index = 0; index < NAND_PAGE_SIZE; index++)
+			NFDATA8_REG = *buffer++;
+
+		// 发送Write命令
+		NFCMD_REG = NAND_CMD_PAGEPROG_START;
+
+		// 等待R/nB信号线Ready
+		nand_wait_idle();
+
+		// Read Status
+		NFCMD_REG = NAND_CMD_STATUS; 
+		data = NFDATA8_REG;
+		if(data & 0x1)	// IO0 == 0, Successful Program; IO0 == 1, Error in Program
+			UART0_SendString("\n\rError in Program\n\r");
+	}
+
+	// 读取完数据, 则取消片选
+	NAND_DISABLE_CE();
+}//}}}
