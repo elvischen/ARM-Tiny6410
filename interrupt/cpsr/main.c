@@ -13,6 +13,7 @@
 #include "uart.h"
 
 //{{{
+// 打印CPSR寄存器的值，并详细打印每一标志位;
 void print_cpsr(unsigned int cpsr, char *why)
 {
 	//printf("\n\rreason=%s cpsr = 0x%x\n\r", why, cpsr);
@@ -58,9 +59,11 @@ int main()
 	
 
 	// 串口初始化, 在start.S中已经调用过
+	/*
 	UART0_Port_Init();
 	UART0_Set_BaudRate();
 	UART0_Set_Format();
+	*/
 
 	
 	// '\n' 换行
