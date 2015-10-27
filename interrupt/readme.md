@@ -140,6 +140,19 @@ ARM有31个通用的32位寄存器，6个程序状态寄存器，共分为7组�
 ###VIC
 The interrupt controller in the S3C6410X is composed of 2 VIC’s (Vectored Interrupt Controller, ARM PrimeCell PL192) and 2 TZIC’s (TrustZone Interrupt Controller, SP890).
 
+特性：
+
+* 每个VIC控制器包含32向量中断
+* 固定的硬件中断优先级别
+* 可编程的中断优先级
+* 支持硬件的中断优先级屏蔽
+* 可编程的硬件的中断优先级屏蔽
+* 可产生一般中断和快速中断
+* 可产生软件中断
+* 原生的中断状态
+* 中断请求状态
+* 支持特权模式来限制访问
+
 ![VIC](VIC.jpg)
 
 S3C6410共有64个中断源，64个中断按硬件分组分成VIC0, VIC1两个组，各组由一个相应寄存器来处理。   
