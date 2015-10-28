@@ -15,7 +15,7 @@
 #ifndef __leds__
 #define __leds__
 
-// 配置LEDS的相关GPIO端口为输出;
+// 配置LEDS的相关GPIO端口为输出; 开启端口后LED灯全部点亮;
 void leds_init(void);
 
 // 让第number个LED灯点亮;

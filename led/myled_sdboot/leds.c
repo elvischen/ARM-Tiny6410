@@ -71,7 +71,7 @@ void delay()
 	while (i--);
 }
 
-// 配置LEDS的相关GPIO端口为输出;
+// 配置LEDS的相关GPIO端口为输出; 开启端口后LED灯全部点亮;
 void leds_init(void)
 {
 	// LED对应管脚设为输出,这里都先使用掩码清零寄存器特定位, 在进行相关配置,可保证配置成功;
