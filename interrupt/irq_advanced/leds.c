@@ -20,66 +20,24 @@
 ****************************************************************/
 
 #include "leds.h"
+#include "common.h"
 
-#define LEDS_NUMBER		4
-
-// BIT位掩码宏定义
-#define	BIT0		(1<<0)
-#define	BIT1		(1<<1)
-#define	BIT2		(1<<2)
-#define	BIT3		(1<<3)
-#define	BIT4		(1<<4)
-#define	BIT5		(1<<5)
-#define	BIT6		(1<<6)
-#define	BIT7		(1<<7)
-#define	BIT8		(1<<8)
-#define	BIT9		(1<<9)
-#define	BIT10		(1<<10)
-#define	BIT11		(1<<11)
-#define	BIT12		(1<<12)
-#define	BIT13		(1<<13)
-#define	BIT14		(1<<14)
-#define	BIT15		(1<<15)
-
-// LED - GPK
-#define GPKCON0 (*(volatile unsigned long *)0x7F008800)
-#define GPKDAT (*(volatile unsigned long *)0x7F008808)
-//LED - 配置GPKCON[4-7]位为输出, (0001, output)
-#define	GPK4_out	(1<<(4*4)) 	// bit16 = 1
-#define	GPK5_out	(1<<(5*4))	// bit20 = 1
-#define	GPK6_out	(1<<(6*4))	// bit24 = 1
-#define	GPK7_out	(1<<(7*4))	// bit28 = 1
-//GPKCON[4-7]的位掩码
-#define	GPK4_mask	(0xf<<(4*4))	// bit[19:16] = 1111
-#define	GPK5_mask	(0xf<<(5*4))
-#define	GPK6_mask	(0xf<<(6*4))
-#define	GPK7_mask	(0xf<<(7*4))
-// LED配置（宏定义）
-#define LED1_ON		(GPKDAT &= ~BIT4)
-#define LED2_ON		(GPKDAT &= ~BIT5)
-#define LED3_ON		(GPKDAT &= ~BIT6)
-#define LED4_ON		(GPKDAT &= ~BIT7)
-#define LED1_OFF	(GPKDAT |= BIT4)
-#define LED2_OFF	(GPKDAT |= BIT5)
-#define LED3_OFF	(GPKDAT |= BIT6)
-#define LED4_OFF	(GPKDAT |= BIT7)
-
-// 简单延时函数定义;
-void delay()
+// {{{ 简单延时函数定义;
+static void delay()
 {
 	volatile int i = 0x100000;
 	while (i--);
-}
+} //}}}
 
-// 配置LEDS的相关GPIO端口为输出;
+// {{{ 配置LEDS的相关GPIO端口为输出;
 void leds_init(void)
 {
 	// LED对应管脚设为输出,这里都先使用掩码清零寄存器特定位, 在进行相关配置,可保证配置成功;
 	GPKCON0 &= ~(GPK4_mask + GPK5_mask + GPK6_mask + GPK7_mask);
 	GPKCON0 |=  (GPK4_out + GPK5_out + GPK6_out + GPK7_out);
-}
+} //}}}
 
-// 让第number个LED灯点亮;
+// {{{ 让第number个LED灯点亮;
 void leds_ON(unsigned short number)
 {
 	if(number <= LEDS_NUMBER)
@@ -100,9 +58,9 @@ void leds_ON(unsigned short number)
 				break;
 		}	
 	}
-}
+} //}}}
 
-// 让第number个LED灯熄灭;
+// {{{ 让第number个LED灯熄灭;
 void leds_OFF(unsigned short number)
 {
 	if(number <= LEDS_NUMBER)
@@ -123,9 +81,9 @@ void leds_OFF(unsigned short number)
 				break;
 		}	
 	}
-}
+} //}}}
 
-// 点亮所有LED灯
+// {{{ 点亮所有LED灯
 void leds_ON_all(void)
 {
 	unsigned short number = 1;
@@ -133,9 +91,9 @@ void leds_ON_all(void)
 	{
 		leds_ON(number);
 	}
-}
+} // }}}
 
-// 熄灭所有LED灯
+// {{{ 熄灭所有LED灯
 void leds_OFF_all(void)
 {
 	unsigned short i = 1;
@@ -143,9 +101,9 @@ void leds_OFF_all(void)
 	{
 		leds_OFF(i);
 	}
-}
+} //}}}
 
-// 流水灯
+// {{{ 流水灯
 // 参数: numbers, 次数
 void leds_flowing(unsigned int numbers)
 {
@@ -159,9 +117,9 @@ void leds_flowing(unsigned int numbers)
 			delay();
 		}
 	}
-}
+} // }}}
 
-// 二进制加法灯, 按照二进制数字闪烁;
+// {{{ 二进制加法灯, 按照二进制数字闪烁;
 void leds_binary(unsigned int numbers)
 {
 	unsigned short i = 0;
@@ -195,4 +153,4 @@ void leds_binary(unsigned int numbers)
 			LED4_OFF;
 		delay();
 	}
-}
+} // }}}

@@ -20,67 +20,26 @@
 ****************************************************************/
 
 #include "key.h"
-#include "uart.h"
-#include "leds.h"
+#include "common.h"	// #define BIT0~BIT15
+#include "uart.h"	// UART0_SendString();
+#include "leds.h"	// leds_ON();
+#include "irq.h"	// VIC0ADDRESS
 
-// BIT位掩码宏定义
-#define	BIT0		(1<<0)
-#define	BIT1		(1<<1)
-#define	BIT2		(1<<2)
-#define	BIT3		(1<<3)
-#define	BIT4		(1<<4)
-#define	BIT5		(1<<5)
-#define	BIT6		(1<<6)
-#define	BIT7		(1<<7)
-#define	BIT8		(1<<8)
-#define	BIT9		(1<<9)
-#define	BIT10		(1<<10)
-#define	BIT11		(1<<11)
-#define	BIT12		(1<<12)
-#define	BIT13		(1<<13)
-#define	BIT14		(1<<14)
-#define	BIT15		(1<<15)
-
-// Button - GPN
-#define GPNCON (*(volatile unsigned long *)0x7F008830)
-#define GPNDAT (*(volatile unsigned long *)0x7F008834)
-//配置按键对应的GPNCON[0:3]为输入, GPNCON[1:0],[3:2],[5:4],[7,6]
-#define GPN0_in			(0<<(0*2))
-#define GPN1_in     	(0<<(1*2))
-#define GPN2_in     	(0<<(2*2))
-#define GPN3_in     	(0<<(3*2))
-//配置按键对应的GPNCON[0:3]为中断引脚(0b10)
-// External interrupt Group 0: 0 ~ 3, GPN0~3, INT_EINT0;
-#define GPN0_int		(2<<(0*2))
-#define GPN1_int     	(2<<(1*2))
-#define GPN2_int     	(2<<(2*2))
-#define GPN3_int     	(2<<(3*2))
-//GPNCON的位掩码
-#define GPN0_mask		(0x3<<(0*2))
-#define GPN1_mask		(0x3<<(1*2))
-#define GPN2_mask		(0x3<<(2*2))
-#define GPN3_mask		(0x3<<(3*2))
-//GPNDAT 位掩码, 低电平表示按键被按下
-#define	BUTTON1		(GPNDAT & BIT0)
-#define	BUTTON2		(GPNDAT & BIT1)
-#define	BUTTON3		(GPNDAT & BIT2)
-#define	BUTTON4		(GPNDAT & BIT3)
-
-// 配置key的相关GPIO端口为输入;
+// {{{ 配置key的相关GPIO端口为输入;
 void key_init(void)
 {
 	GPNCON &= ~(GPN0_mask + GPN1_mask + GPN2_mask + GPN3_mask);
 	GPNCON |=  (GPN0_in + GPN1_in + GPN2_in + GPN3_in);
-}
+} //}}}
 
-// 配置key的相关GPIO端口为中断引脚;
+// {{{ 配置key的相关GPIO端口为中断引脚;
 void key_interrupt_init(void)
 {
 	GPNCON &= ~(GPN0_mask + GPN1_mask + GPN2_mask + GPN3_mask);
 	GPNCON |=  (GPN0_int + GPN1_int + GPN2_int + GPN3_int);
-}
+} //}}}
 
-//返回按键的值;
+//{{{ 返回按键的值;
 char key_1()
 {
 	return (BUTTON1);
@@ -96,11 +55,9 @@ char key_3()
 char key_4()
 {
 	return (BUTTON4);
-}
+}//}}}
 
-// Key1~4外部中断服务函数 - VIC0 - INT_EINT0 - External interrupt Group 0: 0 ~ 3
-#define EINT0PEND  			(*((volatile unsigned long *)0x7F008924))
-#define VIC0ADDRESS        	(*((volatile unsigned long *)0x71200f00))
+// {{{ Key1~4外部中断服务函数 - VIC0 - INT_EINT0 - External interrupt Group 0: 0 ~ 3
 void key_irq_handler(void)
 {
 	// 0. 现场保护, 保存通用寄存器数据
@@ -143,4 +100,4 @@ void key_irq_handler(void)
 	// '^'表示把spsr恢复到cpsr
 	// 这里把之前lr的值赋给PC, 实现跳转;
 	__asm__("ldmia sp!, {r0-r12, pc}^");
-}
+}//}}}

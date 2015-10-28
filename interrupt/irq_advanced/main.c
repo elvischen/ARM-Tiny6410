@@ -77,6 +77,5 @@ int main()
 		data = UART0_GetChar();
 		UART0_PutChar(data);
 	}
-	leds_OFF_all();
     return 0;
 }
