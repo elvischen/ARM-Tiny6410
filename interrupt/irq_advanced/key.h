@@ -22,6 +22,8 @@
 #ifndef __key__
 #define __key__
 
+#define IRQ_KEY	// 开启外部按键中断
+
 // {{{ Button - GPN
 #define GPNCON (*(volatile unsigned long *)0x7F008830)
 #define GPNDAT (*(volatile unsigned long *)0x7F008834)
@@ -59,7 +61,7 @@ char key_3();
 char key_4();
 
 // 配置key的相关GPIO端口为中断引脚;
-void key_interrupt_init(void);
+void key_irq_init(void);
 
 // Key1~4外部中断服务函数 - VIC0 - INT_EINT0 - External interrupt Group 0: 0 ~ 3
 void key_irq_handler(void);

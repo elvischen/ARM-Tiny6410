@@ -5,7 +5,7 @@
   > Author:            < Sean Guo >
   > Mail:              < iseanxp+code@gmail.com >
   > Created Time:      < 2015/10/08 >
-  > Last Changed: 
+  > Last Changed: 	   < 2015/10/29 >
   > Description:		Friendly ARM - Tiny6410 - MMU配置
  ****************************************************************/
 #include "mmu.h"
@@ -163,4 +163,3 @@ void mmu_enable(void)
 	// 修改部分(modify):这部分常常以“memory”为约束条件，以表示操作完成后内存中的内容已有改
 	// 如果原来某个寄存器的内容来自内存, 那么现在内存中这个单元的内容已经改变。
 } //}}}
-

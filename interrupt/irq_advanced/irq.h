@@ -13,8 +13,6 @@
 #ifndef __irq__
 #define __irq__
 
-//#define IRQ_HANDLE_ASM	//使用汇编版中断函数; 注释此宏定义, 则使用C语言版;
-
 // {{{ 中断寄存器配置
 // EINT0CON0, External Interrupt 0(Group0) Configuration Register 0
 // 000 = Low level, 001 = High level, 01x = Falling edge triggered, 10x = Rising edge triggered, 11x = Both edge triggered
