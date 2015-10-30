@@ -1,10 +1,26 @@
 FriendlyARM - Tiny6410
 ====
-芯片: ARM11 (**SAMSUNG S3C6410**, run at 533Mhz, up to 667Mhz)    
-核心板: **Tiny6410 - v1308**    
-扩展底层板: **Tiny6410SDK 增强版 - TinyADK 1312B**   
+
+
+| Hardware | description |
+| :----: | :---------: |
+| CPU | **SAMSUNG S3C6410**, run at 533Mhz, up to 667Mhz |
+| Board | **Tiny6410 (v1308)** |
+| Expander Board | **Tiny6410SDK(TinyADK 1312B) with 7"LCD** | 
+
 
 ----------
+
+| folder | description |
+| :----: | :---------: |
+| **arm-asm** | ARM-S3C6410 Assembler |
+| **no-os** | ARM-S3C6410 Bare-Metal Program |
+| **linux** | ARM-S3C6410 Linux Program |
+| **doc** | ARM-S3C6410 documents | 
+
+
+----------
+
 
 ##核心板: Tiny6410 - v1308
 	SDRAM:		SAMSUNG K4X2G323PD-8GD8
@@ -63,7 +79,7 @@ K9F4G08U0E , K9K8G08U0E, 同一个芯片手册;
 	S/D: 90balls FBGA
 
 ======
-##扩展底层板: Tiny6410SDK 增强版 - TinyADK 1312B
+###扩展底层板: Tiny6410SDK 增强版 - TinyADK 1312B
 	
 	Button:		K1 - XEINT16
 				K2 - XEINT17
@@ -79,8 +95,8 @@ K9F4G08U0E , K9K8G08U0E, 同一个芯片手册;
 
 
 
-FriendlyARM Tiny6410 下载程序
-====================
+###FriendlyARM Tiny6410 下载程序 - MiniTools.exe
+
 
 1. 底层板S2选择NAND启动方式
 
@@ -113,7 +129,9 @@ FriendlyARM Tiny6410 下载程序
 
 注意：**必须先给板子上电，然后在打开MiniTools.exe**, 否则MiniTools.exe会卡死无响应。
 
+###FriendlyARM Tiny6410 下载程序 - SDHC
 
+[SD-Boot](https://github.com/SeanXP/ARM-Tiny6410/tree/master/sd-no-os)
 
 ------
 
