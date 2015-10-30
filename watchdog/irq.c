@@ -10,6 +10,7 @@
  ****************************************************************/
 
 #include "irq.h"
+#include "watchdog.h"
 
 // {{{ 中断初始化 void irq_init(void)
 void irq_init(void)
@@ -33,6 +34,10 @@ void irq_init(void)
 
 #ifdef IRQ_TIMER	// 开启定时器中断
 	timer_irq_init();
+#endif
+
+#ifdef IRQ_WATCHDOG		// 开启看门狗定时器IRQ中断
+	watchdog_irq_init();
 #endif
 }
 //}}}

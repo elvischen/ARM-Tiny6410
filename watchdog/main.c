@@ -11,16 +11,12 @@
 ****************************************************************/
 
 #include "uart.h"
-#include "leds.h"
+#include "watchdog.h"
 
 int main()
 {
 	char data;
 	
-	leds_init();
-	//开始默认关闭LED灯
-	leds_OFF_all();
-
 	// 串口初始化, 在start.S中已经调用过
 	UART0_Port_Init();
 	UART0_Set_BaudRate();
@@ -28,7 +24,8 @@ int main()
 
 	
 	// 测试看门狗的定时功能
-	//wtd_operate(0,1,0,1,100,100000,100000);
+ 	//watchdog_init(66, 0, 62500, 1, 0);	//仅中断, 不复位
+ 	//watchdog_init(66, 0, 62500, 1, 1);	//中断&复位, 配置复位后, 中断函数就鸡肋了, 不会被调用;
 
 	// '\n' 换行
 	// '\r' 回车

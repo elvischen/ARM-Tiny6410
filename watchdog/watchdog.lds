@@ -16,8 +16,7 @@ SECTIONS
 			main.o
 			uart.o
 			irq.o
-			key.o
-			leds.o
+			watchdog.o
 			* (.text)
 	}
 
