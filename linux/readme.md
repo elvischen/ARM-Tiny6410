@@ -1,0 +1,88 @@
+Tiny6410 - Arm Linux
+=====
+
+
+###烧录
+参考: 03- Tiny6410刷机指南.pdf
+
+假设拿到的Tiny6410开发板没有提前下载任何程序，包括Bootloader.
+
+####Bootloader - Superboot
+
+Superboot是FriendlyARM公司提供的Bootloader(非开源)，提供USB下载功能。   
+只要烧写了Superboot, 就可以通过USB下载内核、文件系统到板子的Flash中。
+
+因为Nand Flash现在还没有内容，现在只有通过SD卡启动。    
+
+完全空白的 SD 卡是不能直接启动 6410 开发板的,必须先在 PC 上使用特殊的烧写软 件把 BIOS(也可以称为 bootloader)写入 SD 卡才可以,并且写入的这个 BIOS 是无法在电脑上直接看到的。
+
+一般市场上买到的 SD 卡为全盘 FAT32 格式,如果卡中存放了很多数据,强制烧写就可能会不知不觉中破坏这些数据;   
+基于此原因考虑, FriendlyARM在 Vista/Winows7 中,先把 SD 卡自动分割为普通的 FAT32 格式区(自动命名卷标为"FriendlyARM")和无格式区(占 130M) 两部分,烧写软件将会依据卷标名称作为标志,把 bootloader 烧写到无格式区,这样就不会 破坏普通 FAT32 格式区中的数据了。
+
+Windows 7，使用FriendlyARM提供的SD卡烧录工具**SD-Flasher.exe**:    
+
+1. SD卡连接Window 7（提前备份SD卡数据，下面的操作会格式化SD卡）
+2. 以管理员身份运行SD-Flasher.exe
+3. 点击"Scan"按钮，选择找到的SD卡
+4. 点击"ReLayout!"按钮，对SD卡进行分区
+	* FAT32
+	* 无格式区, SD卡最后的130M空间;    
+	
+	例如一个8G的SDHC卡, 7.4 GiB, 7948206080 bytes, 15523840 sectors（2048-15523839，前2048个扇区被保留）:
+	
+	* FAT32, (第2048扇区~15259647扇区），共15257600扇区。
+	* 无格式区, (第15259648扇区 ~ 15523840扇区)，共有264193扇区（约129M）
+	
+	除了FAT32分区以外，其他扇区总数共266240个扇区。     
+	而前2048个扇区，为FAT32的保留扇区。作为“第一分区”，存放主启动记录(MBR)和分区表，占512字节，其中最后两个字节为信号字"0x55","0xaa"：
+	`% sudo dd if=/dev/sdc bs=1 skip=510 count=2 | od -t x1c`
+5. 分区完成后，重新"Scan"，此时SD卡的"Available"栏目信息变为"Yes"。
+6. 选择Image File，这里选择Bootloader文件(superboot-20111114.bin)
+7. 点击"Fuse"按钮，烧录Bootloader到SD卡
+8. 将SD卡插入Tiny6410开发板卡槽，选择SDBOOT启动模式，连接串口，上电，会看到串口输出消息：
+
+        ##### FriendlyARM Superboot for 6410 #####
+        [f] Format the nand flash
+        [p] Download superboot
+        [v] Download uboot.bin
+        [k] Download Linux/Android kernel
+        [y] Download root yaffs2 image
+        [u] Download root ubifs image
+        [a] Download Absolute User Application
+        [n] Download Nboot.nb0 for WinCE
+        [l] Download WinCE bootlogo
+        [w] Download WinCE NK.bin
+        [b] Boot the system
+        [s] Set the boot parameter of Linux
+        [d] Download and Run an Absolute User Application
+        [i] Version: 1144, RAM 1024 MiB, NAND(SLC) 1GiB
+        Please enter your Selection:
+ 
+
+要使用Superboot的USB下载功能，需要：
+
+1. Windows XP (Window 7 不兼容）
+2. USB驱动(FriendlyARM USB Download Driver Setup_20090421)
+3. DNW下载软件
+
+下载步骤（通过SD卡的Superboot下载Superboot/Kernel/File System到Nand Flash)：
+
+1. 连接串口至电脑用于查看串口输出，连接USB线至电脑用于传输数据。
+2. 启动ARM开发板，进入Superboot。   
+		
+	* Nand Flash下的Superboot, 会自动引导Linux内核。因此需要按住按钮再上电。
+	* SD卡的Superboot, 可以直接上电。
+
+3. 选择[p]选项，烧录Superboot.bin到Nand Flash; 以后就可以脱离SD卡。
+4. 选择[k]选项，烧录zImage(Linux内核文件)到Nand Flash;
+5. 选择[y]/[u]选项，烧录不同格式的文件系统到Nand Flash;
+6. 选择[b]选项，启动Nand Flash内的Linux内核。
+
+另外，还可以通过[d]选项，直接下载程序(例如之前交叉编译好的leds.bin, key.bin等）到内存起始地址，并开始运行程序。
+
+
+####Bootloader - U-boot
+
+no-os/sd-no-os/u-boot    
+[https://github.com/SeanXP/ARM-Tiny6410/tree/master/no-os/sd-no-os/u-boot]
+
