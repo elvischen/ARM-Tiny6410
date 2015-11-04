@@ -83,6 +83,73 @@ Windows 7，使用FriendlyARM提供的SD卡烧录工具**SD-Flasher.exe**:
 
 ####Bootloader - U-boot
 
-no-os/sd-no-os/u-boot    
-[https://github.com/SeanXP/ARM-Tiny6410/tree/master/no-os/sd-no-os/u-boot]
+SD卡烧录U-Boot:
 
+no-os/sd-no-os/u-boot    
+[https://github.com/SeanXP/ARM-Tiny6410/tree/master/no-os/sd-no-os/u-boot]   
+
+SDBOOT启动U-Boot，烧录U-Boot到NAND Flash:
+
+1. 判断mmc设备号
+	
+		MINI6410 # mmc dev
+		mmc0 is current device
+2. 查看SD卡的文件
+
+		MINI6410 # fatls mmc 0
+		270336   superboot-20111114.bin
+		255576   u-boot.bin
+		4096   u-boot-spl-16k.bin
+		259672   u-boot-nand.bin
+
+		4 file(s), 0 dir(s)
+	需要事先拷贝u-boot-nand.bin到SD卡。
+3. 读取u-boot-nand.bin到SDRAM
+
+		MINI6410 # fatload mmc 0 50008000 u-boot-nand.bin
+		reading u-boot-nand.bin
+
+		259672 bytes read
+4. 将内存中的u-boot-nand.bin写入到Nand Flash的Bootloader区域.
+	
+	这里的Bootloader为0 ~ 0x80000(512K)
+	
+		MINI6410 # nand erase 0 0x80000
+		NAND erase: device 0 offset 0x0, size 0x80000
+		Erasing at 0x60000 -- 100% complete.
+		OK
+		
+		MINI6410 # nand write 50008000 0 80000
+		NAND write: device 0 offset 0x0, size 0x80000
+		524288 bytes written: OK
+ 
+5. 切换为NAND启动，上电，会看到Nand Flash上的U-Boot启动。
+
+
+nfs烧录:
+
+1. 搭建NFS服务器，目录:  10.42.1.100:/var/nfsroot/arm/
+2. SDBOOT启动U-Boot
+
+		MINI6410 # nfs 50008000 10.42.1.100:/var/nfsroot/arm/u-boot-nand.bin
+		dm9000 i/o: 0x18000300, id: 0x90000a46
+		DM9000: running in 16 bit mode
+		MAC: 08:08:10:12:10:27
+		operating at 100M full duplex mode
+		Using dm9000 device
+		File transfer via NFS from server 10.42.1.100; our IP address is 10.42.1.70
+		Filename '/var/nfsroot/arm/u-boot-nand.bin'.
+		Load address: 0x50008000
+		Loading: 	###################################################
+		doen
+		Bytes transferred = 259672 (3f658 hex)
+3. 烧写进Nand Flash
+
+		NAND erase: device 0 offset 0x0, size 0x80000
+		Erasing at 0x60000 -- 100% complete.
+		OK
+		
+		MINI6410 # nand write 50008000 0 0x80000
+		NAND write: device 0 offset 0x0, size 0x80000
+		524288 bytes written: OK
+		
