@@ -145,6 +145,7 @@ SD卡烧录U-Boot.bin:
 		Bytes transferred = 259672 (3f658 hex)
 3. 烧写进Nand Flash
 
+		MINI6410 # nand erase 0x0 0x80000
 		NAND erase: device 0 offset 0x0, size 0x80000
 		Erasing at 0x60000 -- 100% complete.
 		OK
