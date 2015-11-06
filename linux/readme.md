@@ -2,12 +2,12 @@ Tiny6410 - Arm Linux
 =====
 
 
-###烧录
+#烧录
 参考: 03- Tiny6410刷机指南.pdf
 
 假设拿到的Tiny6410开发板没有提前下载任何程序，包括Bootloader.
 
-####Bootloader - Superboot
+###Bootloader - Superboot
 
 Superboot是FriendlyARM公司提供的Bootloader(非开源)，提供USB下载功能。   
 只要烧写了Superboot, 就可以通过USB下载内核、文件系统到板子的Flash中。
@@ -81,14 +81,15 @@ Windows 7，使用FriendlyARM提供的SD卡烧录工具**SD-Flasher.exe**:
 另外，还可以通过[d]选项，直接下载程序(例如之前交叉编译好的leds.bin, key.bin等）到内存起始地址，并开始运行程序。
 
 
-####Bootloader - U-boot
+###Bootloader - U-boot
 
-SD卡烧录U-Boot:
+使用Tekkaman Ninja移植的[U-boot-2011.06](https://github.com/tekkamanninja/u-boot-2011.06-for-MINI6410).
 
-no-os/sd-no-os/u-boot    
-[https://github.com/SeanXP/ARM-Tiny6410/tree/master/no-os/sd-no-os/u-boot]   
+SD卡烧录U-Boot.bin:
 
-SDBOOT启动U-Boot，烧录U-Boot到NAND Flash:
+[no-os/sd-no-os/u-boot](https://github.com/SeanXP/ARM-Tiny6410/tree/master/no-os/sd-no-os/u-boot) 
+
+**SDBOOT启动U-Boot，通过fatload烧录U-Boot到NAND Flash:**
 
 1. 判断mmc设备号
 	
@@ -125,8 +126,7 @@ SDBOOT启动U-Boot，烧录U-Boot到NAND Flash:
  
 5. 切换为NAND启动，上电，会看到Nand Flash上的U-Boot启动。
 
-
-nfs烧录:
+**SDBOOT启动U-Boot，通过NFS烧录U-Boot到NAND Flash:**
 
 1. 搭建NFS服务器，目录:  10.42.1.100:/var/nfsroot/arm/
 2. SDBOOT启动U-Boot
@@ -153,3 +153,64 @@ nfs烧录:
 		NAND write: device 0 offset 0x0, size 0x80000
 		524288 bytes written: OK
 		
+**SDBOOT启动U-Boot，通过NFS烧录linux kernel到NAND Flash:**   
+
+注意：**不要用U-boot引导FriendlyARM官方给的zImage，不同bootloader对内核的引导略有不同，最好利用U-Boot的mkimage重新生成uImage.**
+
+Linux Kernel: 使用FriendlyARM提供的linux-2.6.38-20140106.tgz。
+
+1. 交叉编译linux内核，得到vmlinux
+2. 使用mkimage(u-boot-2011.06-for-MINI6410/tools/mkimage), 生成U-Boot格式的映像文件uImage.
+	
+		arm-linux-objcopy -O binary -R .note -R .comment -S vmlinux linux.bin
+		gzip -9 linux.bin
+		./mkimage -A arm -O linux -T kernel -C gzip -a 0x50008000 -e 0x50008000 -n "Linux Kernel Image" -d linux.bin.gz uImage
+		
+	
+	输出:
+	
+		Image Name:   Linux Kernel Image
+		Created:      Fri Nov  6 11:11:04 2015
+		Image Type:   ARM Linux Kernel Image (gzip compressed)
+		Data Size:    3742549 Bytes = 3654.83 kB = 3.57 MB
+		Load Address: 50008000
+		Entry Point:  50008000
+		
+	对于ARM linux内核映象用法：
+
+	* -A arm , 架构是arm
+	* -O linux , 操作系统是linux
+	* -T kernel , 类型是kernel
+	* -C none/bzip/gzip , 压缩类型
+	* -a 50008000 , image的载入地址(hex)，通常为0xX00008000
+	* -e 500080XX , 内核的入口地址(hex)，XX为0x40或者0x00
+	* -n linux-XXX , image的名字，任意
+	* -d nameXXX , 无头信息的image文件名，你的源内核文件
+	* uImageXXX , 加了头信息之后的image文件名，任意取
+
+	-a和-e后面跟的分别是image的载入地址(Load Address)和内核的入口地址(Enter Point)，两者可以一样，也可以不一样，依情况而定：   
+  
+	* 当-a后面指定的地址和bootm xxxx后面的地址一样时(此时u-boot不需要搬运映像文件uImage)，则-e后面的地址必须要比-a后面的地址多0x40，也就是映像头的大小64个字节。
+	* 当-a后面指定的地址和bootm xxxx后面的地址不一样时（u-boot会将bootm xxxx地址处的映像搬运到-a指定的地址处），此时，-e和-a必须要一样，因为映像头并没有搬运过去，载入地址就应该是内核的入口地址。需要注意的是，因为uboot要重新搬运内核映像，所以要注意bootm xxxx的地址和-a之间的地址不要导致复制时的覆盖。     
+	例如：   
+	Load Address: 0x0000000
+	u-boot: bootm 0x00010000
+	地址不同，需要搬运uImage, 不搬运头部64字节。但是uImage在搬运过程中，会覆盖到旧的uImage, 导致错误:
+	
+	
+			Uncompressing Kernel Image ... Error: inflate() returned −3
+			GUNZIP ERROR − must RESET board to recover
+
+		
+
+3. 通过NFS烧录(U-Boot Command Line):
+
+		nfs 0x50008000 10.42.1.100:/var/nfsroot/arm/uImage
+		nand erase 0x80000 0x500000
+		nand write 0x50008000 0x80000 0x500000
+	
+4. 配置U-Boot参数bootcmd
+
+		MINI6410 # setenv bootcmd "nand read 0x51008000 0x80000 0x500000; bootm 0x51008000"
+		MINI6410 # saveenv
+	从Nand Flash的0x80000处，读取5M数据，存放到SDRAM的0x51008000处，然后调用bootm函数。0x51008000处存放着uImage, 其头部描述Load Address为0x50008000，与bootm的参数(0x51008000）不同，则拷贝0x51008000处的uImage到0x50008000, 不拷贝头部。然后进入Entry Point(0x50008000), 内核启动成功。
