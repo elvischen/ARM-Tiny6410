@@ -155,7 +155,7 @@ SD卡烧录U-Boot.bin:
 		
 **SDBOOT启动U-Boot，通过NFS烧录linux kernel到NAND Flash:**   
 
-注意：**不要用U-boot引导FriendlyARM官方给的zImage，不同bootloader对内核的引导略有不同，最好利用U-Boot的mkimage重新生成uImage.**
+注意：**不要用U-boot引导FriendlyARM官方给的zImage，不同bootloader对内核的引导略有不同，最好利用U-Boot的mkimage重新生成uImage.** 使用U-boot引导zImage，会导致"Error: unrecognized/unsupported machine ID"的问题。
 
 Linux Kernel: 使用FriendlyARM提供的linux-2.6.38-20140106.tgz。
 
@@ -214,3 +214,42 @@ Linux Kernel: 使用FriendlyARM提供的linux-2.6.38-20140106.tgz。
 		MINI6410 # setenv bootcmd "nand read 0x51008000 0x80000 0x500000; bootm 0x51008000"
 		MINI6410 # saveenv
 	从Nand Flash的0x80000处，读取5M数据，存放到SDRAM的0x51008000处，然后调用bootm函数。0x51008000处存放着uImage, 其头部描述Load Address为0x50008000，与bootm的参数(0x51008000）不同，则拷贝0x51008000处的uImage到0x50008000, 不拷贝头部。然后进入Entry Point(0x50008000), 内核启动成功。
+	
+----
+
+###File System - 文件系统
+
+1. 制作文件系统     
+	* 参考: 韦东山 - 17章节    
+	* 参考: [ 一步一步制作yaffs/yaffs2根文件系统](http://blog.csdn.net/mybelief321/article/details/9995199)
+2. NFS挂载     
+	制作好根文件系统，先别着急制作成yaffs2格式的映像，别着急下载到Nand Flash，先通过NFS挂载文件系统，测试文件系统是否正常。
+	
+		setenv bootargs "root=/dev/nfs console=ttySAC0,115200 init=/linuxrc nfsroot=10.42.1.100:/var/nfsroot/rootfs ip=10.42.1.70:10.42.1.100:10.42.1.254:255.255.255.0:name:eth0:on"
+		saveenv
+		boot
+3. 使用mkyaffs2image-128生成yaffs2映像，烧写到板子上进行测试
+	
+	mkyaffs2image（适合64M）    
+	mkyaffs2image-128（适合128M以上）    
+	注：由于FriendlyARM提供的mkyaffs2image-128代码有改动，使用该工具制作的yaffs2映像，在引导时可能存在以下问题：
+	
+		/init: line 103: can't open /r/dev/console: no such file
+		Kernel panic - not syncing: Attempted to kill init!
+	虽然网上遇到这种问题的解决办法是：
+	
+	在根文件系统/dev/目录下，创建console节点:
+	
+		sudo mknod console c 5 1
+	但这里的问题并不是这个。
+	Google Search : 
+	
+		site:arm9home.net /r/dev/console
+	用自己编译的内核加上友善的yaffs2文件系统，友善的内核加自己的文件系统，自己的内核加自己的文件系统全都会出现上述提示。只有用友善的内核和文件系统才不会报错。 
+	
+	/r, 这是系统启动时先会mount 命令行参数指定的rootfs到 /r 目录, 准备好后再切换/r 为根目录
+如果mount失败, 或烧写的文件系统有问题等等, 那么都会出现这个错误。
+
+	使用SuperBoot-6410与zImage不存在此问题，NFS引导不存在此问题（其他网友存在此问题）。   
+	暂未解决。
+
