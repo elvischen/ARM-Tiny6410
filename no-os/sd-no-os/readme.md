@@ -16,6 +16,15 @@ SD Boot - SD卡启动
 ![sd](images/sd-mapping.png "sd-mapping")
 ![sdhc](images/sdhc-mapping.png "sd-mapping")
 
+SD & SDHZ区别
+
+1. 容量    
+	
+	* SD卡容量小，最高为2GB;
+	* SDHC容量大，2GB, 4GB, 32GB等等;
+2. 存储卡正面的标识贴纸（厂商、容量、类型）    
+	看标识是最保险的方法...
+
 ###备注: 
 6410的手册上说，可以从nandflash、onenand、SD卡启动，没有专用的烧录工具的情况下，只有SD卡启动是可以考虑的。手册上看到，SD卡启动，实际上是先执行片内IROM中的一段程序，该程序从SD卡中读取代码，写到stepping stone中，stepping stone是位于0x0c000000、size为8K的片内内存，代码写入stepping stone后，跳到0x0c000000处继续执行程序。
 
