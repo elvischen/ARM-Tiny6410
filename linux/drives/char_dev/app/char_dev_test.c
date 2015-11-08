@@ -11,20 +11,26 @@
 						
 						./char_dev_test read
 						./char_dev_test write "hello"
+						./char_dev_test ioctl clear
 							
 ****************************************************************/
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
 #define CHR_DEV_NAME	"/dev/char_dev" //自己创建的字符驱动设备节点
 #define	BUFFER_SIZE		1024
+
+// ioctl cmd
+#define	BUFFER_CLEAR_CMD	0x909090		//IO ctrl command, 用于清空设备缓存
 
 char buffer[BUFFER_SIZE];		// 用户空间的Buffer, 存储从内核空间buffer中读取出来的数据;
 
 int write_chr(const char *string);
 int read_chr();
+int ioctl_chr(int cmd, int arg);
 
 int main(int argc, char *argv[])
 {
@@ -35,6 +41,11 @@ int main(int argc, char *argv[])
 	else if((argc == 2) && (strcmp(argv[1], "read") == 0))
 	{
 		read_chr();
+	}
+	else if((argc == 3) && (strcmp(argv[1], "ioctl") == 0))
+	{
+		if(strcmp(argv[2], "clear") == 0)
+			ioctl_chr(BUFFER_CLEAR_CMD, 0);
 	}
 	else
 	{
@@ -77,7 +88,7 @@ int read_chr()
 	}
 	if(read(fd,buffer,BUFFER_SIZE) == -1)
 	{
-		fprintf(stderr, "Failed to write into device %s!\n", CHR_DEV_NAME);
+		fprintf(stderr, "Failed to read from device %s!\n", CHR_DEV_NAME);
 		return -1;
 	}
 	printf("read device%s :\n", CHR_DEV_NAME);
@@ -85,4 +96,25 @@ int read_chr()
 
 	close(fd);
 	return 0;
+}
+
+int ioctl_chr(int cmd, int arg)
+{
+	int fd = open(CHR_DEV_NAME, O_RDONLY | O_NDELAY);	
+		
+	if(fd < 0)
+	{
+		fprintf(stderr, "Ftiled to open device %s!\n", CHR_DEV_NAME);
+		return -1;
+	}
+	if(ioctl(fd, cmd, arg) == -1)
+	{
+		fprintf(stderr, "Failed to ioctl device %s!\n", CHR_DEV_NAME);
+		return -1;
+	}
+	printf("ioctl ( %d, %d)\n", cmd, arg);
+
+	close(fd);
+	return 0;
+	
 }

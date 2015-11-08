@@ -16,6 +16,8 @@ char device test
 	./char_dev_test read
 	./char_dev_test write "write what I want to write..."
 	./char_dev_test read
+	./char_dev_test ioctl clear
+	./char_dev_test read
 	dmesg | tail
 
 4. 卸载程序
