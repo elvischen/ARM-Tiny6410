@@ -92,3 +92,20 @@ u-boot里面的mkimage工具来生成uImage（u-boot源码包/tools/mkimage.c )
 当-a后面指定的地址和bootm xxxx后面的地址一样时，-e后面的地址必须要比-a后面的地址多0x40，也就是映像头的大小64个字节。因为当他们地址一样时，uboot是不会搬运映像的。    
 当-a后面指定的地址和bootm xxxx后面的地址不一样时，uboot会将bootm xxxx地址处的映像搬运到-a指定的地址处，此时，-e和-a必须要一样，因为映像头并没有搬运过去，载入地址就是内核的入口地址。需要注意的是，因为uboot要重新搬运内核映像，所以要注意bootm xxxx的地址和-a之间的地址不要导致复制时的覆盖。    
 
+------
+
+
+此文件夹内提供已制作好的uImage:
+
+	Image Name:   Linux Kernel Image
+	Created:      Fri Nov  6 11:11:04 2015
+	Image Type:   ARM Linux Kernel Image (gzip compressed)
+	Data Size:    3742549 Bytes = 3654.83 kB = 3.57 MB
+	Load Address: 50008000
+	Entry Point:  50008000
+
+内核源码: linux-2.6.38-20140106.tgz    
+
+交叉编译工具: arm-linux-gcc-4.5.1-v6-vfp-20101103.tgz
+
+U-Boot: u-boot-2011.06-for-MINI6410.tar.bz2
