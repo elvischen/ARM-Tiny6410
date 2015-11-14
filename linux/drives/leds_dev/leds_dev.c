@@ -38,9 +38,9 @@
 #define DEVICE_NAME		"ledsdev"
 //}}} 
 
-// {{{ ioctl
-// int ioctl(int fd,unsigned long cmd,...);
-// ioctl是设备驱动程序中对设备的I/O通道进行管理的函数
+// {{{ unlocked_ioctl
+// long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+// unlocked_ioctl是设备驱动程序中对设备的I/O通道进行管理的函数
 // 用户程序通过命令码(cmd)告诉驱动程序想做什么, 至于怎么解释这些命令和怎么实现这些命令,这都是驱动程序要做的事情
 // 参数:
 //	cmd = 0, 关闭arg指定的LED灯;
@@ -48,7 +48,7 @@
 //	arg, (0~4), 其中0表示所有的LED灯, 1~4分别表示LED1~LED4
 // 返回: 
 // 	返回0或者错误-EINVAL
-static int s3c6410_leds_ioctl(struct file*filp, unsigned int cmd, unsigned long arg)
+static long s3c6410_leds_ioctl(struct file* filp, unsigned int cmd, unsigned long arg)
 {
 	switch(cmd){
 		unsigned tmp;

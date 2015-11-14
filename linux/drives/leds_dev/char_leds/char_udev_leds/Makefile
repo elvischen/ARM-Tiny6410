@@ -1,5 +1,5 @@
 # Linux Module
-OBJECT=char_leds
+OBJECT=char_udev_leds
 obj-m := $(OBJECT).o
 # 当前路径
 CURRENT_PATH:=$(shell pwd)

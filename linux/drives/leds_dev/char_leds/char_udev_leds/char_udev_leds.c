@@ -1,17 +1,14 @@
 /****************************************************************
     Copyright (C) 2015 Sean Guo. All rights reserved.
 					      									  
-    > File Name:         < char_leds.c >
+    > File Name:         < char_udev_leds.c >
     > Author:            < Sean Guo >
     > Mail:              < iseanxp+code@gmail.com >
-    > Created Time:      < 2015/11/07 >
-    > Last Changed: 	 < 2015/11/14 >
+    > Created Time:      < 2015/11/14 >
+    > Last Changed: 	 
     > Description:		Friendly ARM Tiny6410 - Linux Device Drivers - LED - 标志字符设备驱动程序
 
-						需要手动创建设备节点: 
-						# insmod char_leds.ko
-						得到分配的设备号, 假设为253, 则创建设备节点
-						# mknod /dev/ledsdev c 253 0
+						使用udev自动创建设备节点
 
 						LED I/O 在open()时配置为输出方向, 
 						应用程序用过ioctl发送cmd(0,关闭; 1,打开)和arg(LED编号);
@@ -35,6 +32,7 @@
 #include <mach/regs-gpio.h>		//定义了gpio-bank-k中使用的S3C64XX_GPK_BASE
 #include <mach/map.h>			//定义了S3C64XX_VA_GPIO 
 #include<linux/cdev.h>			//包含字符驱动设备struct cdev的定义;
+#include<linux/device.h>		// class_device_create(), class_create()
 #include <asm/uaccess.h>   	 	//copy_to_user() & copy_from_user()
 // }}}
 
@@ -42,7 +40,7 @@
 // 加载模式后，执行"cat /proc/devices"命令看到的设备名称
 #define DEVICE_NAME		"ledsdev"
 // 设备编号, 为0时会自动分配
-#define DEVICE_MAJOR	0
+unsigned int DEVICE_MAJOR = 0;
 //}}} 
 
 // {{{ cdev
@@ -70,6 +68,11 @@
 **********************************************************/
 static struct cdev leds_cdev;			//定义一个字符设备对象
 static dev_t leds_dev_t;				//字符设备节点的设备号
+
+
+// udev创建节点时使用
+static struct class * s3c6410_leds_class = NULL;  
+static struct  device * s3c6410_leds_device = NULL;  
 // }}}
 
 // {{{ open
@@ -206,13 +209,14 @@ static int __init s3c6410_leds_init(void)
 {
 	//在设备驱动程序注册的时候, 初始化LED1～LED4所对应的GPIO管脚为输出, 并熄灭LED1~LED4
 	int ret; 		//用于存放函数调用返回值的变量
+	unsigned int leds_major = DEVICE_MAJOR;
 
 	printk(DEVICE_NAME ", char device init.\n");
 
-	if(DEVICE_MAJOR)	// 设备号不为0, 注册指定设备编号
+	if(leds_major)	// 设备号不为0, 注册指定设备编号
 	{
 		// MKDEV(int major,int minor) //通过主次设备号来生成dev_t类型的设备号
-		leds_dev_t = MKDEV(DEVICE_MAJOR, 0);
+		leds_dev_t = MKDEV(leds_major, 0);
 		// int register_chrdev_region(dev_t from, unsigned count, const char *name) - register a range of device numbers
 		ret = register_chrdev_region(leds_dev_t, 1, DEVICE_NAME);	//注册设备编号
 		// 内核提供了三个函数来注册一组字符设备编号
@@ -234,7 +238,6 @@ static int __init s3c6410_leds_init(void)
 		// count是请求的连续设备编号的总数
 		// name为设备名
 		// 返回值小于0表示分配失败
-		int leds_major = 0;
 		ret = alloc_chrdev_region(&leds_dev_t, 0, 1, DEVICE_NAME);  
 		if(ret < 0)
 		{  
@@ -242,8 +245,9 @@ static int __init s3c6410_leds_init(void)
 			return ret;  
 		}
 		leds_major = MAJOR(leds_dev_t);//MAJOR(dev) 获得主设备号  
-		printk(KERN_ALERT "leds device major = %d.\n", leds_major);  
 	}
+	printk(DEVICE_NAME " device major = %d.\n", leds_major);  
+	DEVICE_MAJOR = leds_major;	//记录分配的主设备号, 注销时会用到
 
 	// 已静态创建cdev结构体变量leds_cdev
 	//void cdev_init(struct cdev*cdev,struct file_operations *fops)
@@ -251,12 +255,31 @@ static int __init s3c6410_leds_init(void)
 	//int cdev_add(struct cdev *dev,dev_t num,unsigned int count)  
 	cdev_add(&leds_cdev, leds_dev_t, 1); 
 
-	// 第三种绑定设备号的方法, 直接绑定file_operations
-	// register_chrdev(), 注册字符设备, 参数为主设备号, 设备名字, file_operations结构
-	// 这样, 主设备号就和具体的file_operations结构关联起来
-	// 操作主设备为LED_MAJOR的设备文件时，就会调用对应file_operations中的相关成员函数
-	// 主设备号可以设为0，表示由内核自动分配主设备号
-	//ret = register_chrdev(LED_MAJOR, DEVICE_NAME, &S3C6410_LEDS_FOPS);
+	// 当前驱动模块注册设备成功，现在使用class自动创建设备
+	// class_create为当前驱动模块创建一个class, 在/sys/class/下创建类目录
+	// struct class *class_create(struct module *owner, const char *name)
+	//		class_create - create a struct class structure
+	//		@owner: pointer to the module that is to "own" this struct class
+	//		@name: pointer to a string for the name of this class.
+	s3c6410_leds_class = class_create(THIS_MODULE, "tiny6410led");
+	if (IS_ERR(s3c6410_leds_class)) 
+	{
+		ret = PTR_ERR(s3c6410_leds_class);
+		printk(DEVICE_NAME " create class error.\n");
+		return ret;
+	}
+	// 为每个设备调用 class_device_create创建对应的设备节点;
+	// struct class_device *class_device_create(struct class *cls, struct class_device *parent,
+	//											dev_t devt, struct device *device, 
+	//											const char *fmt, ...)
+	//class_device_create - creates a class device and registers it with sysfs
+	//	@cls: pointer to the struct class that this device should be registered to.
+	//	@parent: pointer to the parent struct class_device of this new device, if any.
+	//	@devt: the dev_t for the char device to be added.
+	//	@device: a pointer to a struct device that is assiociated with this class device.
+	//	@fmt: string for the class device's name
+	s3c6410_leds_device = device_create(s3c6410_leds_class, NULL, 
+										leds_dev_t, NULL, DEVICE_NAME);	
 
 	return 0;
 } //}}}
@@ -267,9 +290,12 @@ static int __init s3c6410_leds_init(void)
 // __exit 宏, 表示将此函数代码放在".exit.data"段中; 静态链接时没有使用,因为静态链接的驱动不能被卸载
 static void __exit s3c6410_leds_exit(void)
 {
-	// 卸载驱动程序
 	printk(DEVICE_NAME " module exit.\n");
-	cdev_del(&leds_cdev);						//注销chr_dev对应的字符设备对象
+	//删除创建的设备节点
+	device_destroy(s3c6410_leds_class, leds_dev_t);         //delete device node under /dev
+	class_destroy(s3c6410_leds_class);     	                //delete class
+	// 卸载驱动程序
+	cdev_del(&leds_cdev);							//注销chr_dev对应的字符设备对象
 	unregister_chrdev_region(leds_dev_t, 1);		//释放分配的设备号
 } //}}}
 
